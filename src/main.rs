@@ -9,11 +9,11 @@ const NO_VALUE: &str = "-";
 
 fn run_part<F>(number: i32, part: i32, run: F)
 where
-    F: Fn(String) -> Option<i64>,
+    F: Fn(&str) -> Option<i64>,
 {
     let content = fs::read_to_string(format!("input/day{number}-part{part}.txt"));
     let result = match content {
-        Ok(content) => run(content),
+        Ok(content) => run(content.trim()),
         Err(_) => None,
     };
     let result = match result {

@@ -3,7 +3,7 @@ use crate::days;
 pub struct Day;
 
 impl Day {
-    fn short_fuse(&self, lines: String) -> i64 {
+    fn short_fuse(&self, lines: &str) -> i64 {
         let lines = lines.split("\n");
         lines.count() as i64
     }
@@ -14,7 +14,7 @@ impl days::Day for Day {
         0
     }
 
-    fn part1(&self, lines: String) -> Option<i64> {
+    fn part1(&self, lines: &str) -> Option<i64> {
         Some(self.short_fuse(lines))
     }
 }
@@ -30,9 +30,7 @@ mod tests {
         assert_eq!(
             DAY.part1(
                 "some line
-some other line"
-                    .to_string()
-            ),
+some other line"),
             Some(2)
         )
     }

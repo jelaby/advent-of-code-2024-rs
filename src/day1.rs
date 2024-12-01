@@ -7,7 +7,7 @@ impl days::Day for Day {
         1
     }
 
-    fn part1(&self, input: String) -> Option<i64> {
+    fn part1(&self, input: &str) -> Option<i64> {
         let mut left = vec![];
         let mut right = vec![];
 
@@ -43,6 +43,6 @@ mod tests {
 1   3
 3   9
 3   3";
-        assert_eq!(DAY.part1(text.to_string()), Some(11))
+        assert_eq!(DAY.part1(text), Some(11))
     }
 }
