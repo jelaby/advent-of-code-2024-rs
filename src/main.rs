@@ -11,7 +11,8 @@ fn run_part<F>(number: i32, part: i32, run: F)
 where
     F: Fn(&str) -> Option<i64>,
 {
-    let content = fs::read_to_string(format!("input/day{number}-part{part}.txt"));
+    let content = fs::read_to_string(format!("input/day{number}-part{part}.txt"))
+        .or_else(|_|  fs::read_to_string(format!("input/day{number}-part1.txt")));
     let result = match content {
         Ok(content) => run(content.trim()),
         Err(_) => None,
