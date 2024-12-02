@@ -2,6 +2,54 @@ use crate::days;
 
 pub struct Day;
 
+impl Day {
+
+}
+
+fn check_report(report: &Vec<i64>) -> bool{
+    let mut direction = Direction::Unknown;
+    let mut i = report.iter();
+    let mut last = i.next().unwrap();
+    loop {
+        let n = i.next();
+
+        match n {
+            None => break true,
+            Some(n) => {
+                if n == last {
+                    break false;
+                }
+
+                if (n - last).abs() > 3 {
+                    break false;
+                }
+
+                match direction {
+                    Direction::Unknown => {
+                        if n > last {
+                            direction = Direction::Up
+                        } else {
+                            direction = Direction::Down
+                        }
+                    }
+                    Direction::Up => {
+                        if n < last {
+                            break false;
+                        }
+                    }
+                    Direction::Down => {
+                        if n > last {
+                            break false;
+                        }
+                    }
+                }
+
+                last = n;
+            }
+        }
+    }
+}
+
 enum Direction {
     Unknown,
     Up,
@@ -21,54 +69,37 @@ impl days::Day for Day {
         Some(
             reports
                 .iter()
-                .filter(|report| {
-                    let mut direction = Direction::Unknown;
-                    let mut i = report.iter();
-                    let mut last = i.next().unwrap();
-                    'result: loop {
-                        let n = i.next();
-
-                        match n {
-                            None => break true,
-                            Some(n) => {
-                                if n == last {
-                                    break 'result false;
-                                }
-
-                                if (n - last).abs() > 3 {
-                                    break 'result false;
-                                }
-
-                                match direction {
-                                    Direction::Unknown => {
-                                        if n > last {
-                                            direction = Direction::Up
-                                        } else {
-                                            direction = Direction::Down
-                                        }
-                                    }
-                                    Direction::Up => {
-                                        if n < last {
-                                            break 'result false;
-                                        }
-                                    }
-                                    Direction::Down => {
-                                        if n > last {
-                                            break 'result false;
-                                        }
-                                    }
-                                }
-
-                                last = n;
-                            }
-                        }
-                    }
-                })
+                .filter(|r| check_report(r))
                 .count() as i64,
         )
     }
     fn part2(&self, input: &str) -> Option<i64> {
-        None
+        let reports = input
+            .split_terminator("\n")
+            .map(|line| line.split_whitespace().map(|n| n.parse().unwrap()).collect())
+            .collect::<Vec<Vec<i64>>>();
+
+        Some(
+            reports
+                .iter()
+                .filter(|report| {
+                    if check_report(&report) {
+                        return true
+                    }
+
+                    for i in 0..reports.len() {
+                        if check_report(&report.iter().enumerate()
+                            .filter(|(j, _)| i != *j)
+                            .map(|(_, &v)| v)
+                            .collect()) {
+                            return true;
+                        }
+                    }
+
+                    return false;
+                })
+                .count() as i64,
+        )
     }
 }
 
@@ -95,6 +126,11 @@ mod tests {
 1 3 2 4 5
 8 6 4 4 1
 1 3 6 7 9";
-        assert_eq!(DAY.part2(text), Some(31))
+        assert_eq!(DAY.part2(text), Some(4))
+    }
+    #[test]
+    fn part2_remove_first() {
+        let text = "1 8 9 10 11";
+        assert_eq!(DAY.part2(text), Some(1))
     }
 }
