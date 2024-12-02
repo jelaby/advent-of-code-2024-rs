@@ -1,5 +1,6 @@
 mod day0;
 mod day1;
+mod day2;
 mod days;
 
 use std::fs;
@@ -26,7 +27,11 @@ where
 }
 
 fn main() {
-    let days: [Box<dyn days::Day>; 2] = [Box::new(day1::Day), Box::new(day0::Day)];
+    let days: [Box<dyn days::Day>; 3] = [
+        Box::new(day2::Day),
+        Box::new(day1::Day),
+        Box::new(day0::Day),
+    ];
 
     for day in days {
         let number = day.day();
