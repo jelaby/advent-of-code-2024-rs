@@ -16,7 +16,7 @@ const NO_VALUE: &str = "-";
 const EASTERN_STANDARD_TIME: chrono::FixedOffset =
     chrono::FixedOffset::west_opt(4 * 60 * 60).unwrap();
 
-fn input_filename(day: u32, part: u32) -> String {
+fn input_filename(day: u32, _part: u32) -> String {
     format!("input/day{day}.txt")
 }
 
