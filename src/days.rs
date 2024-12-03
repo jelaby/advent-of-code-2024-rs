@@ -6,6 +6,8 @@ pub enum AoCError {
     Io(#[from] std::io::Error),
     #[error("an HTTP error occurred")]
     Http(#[from] reqwest::Error),
+    #[error("could not find .cookie file containing session like session=<value>")]
+    CookieFile(std::io::Error),
 }
 
 pub trait Day {

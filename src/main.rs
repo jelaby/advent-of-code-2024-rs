@@ -10,6 +10,7 @@ use chrono;
 use std::fs;
 use std::string::ToString;
 use chrono::NaiveDate;
+use crate::days::AoCError;
 
 const NO_VALUE: &str = "-";
 const EASTERN_STANDARD_TIME: chrono::FixedOffset = chrono::FixedOffset::west_opt(4*60*60).unwrap();
@@ -28,10 +29,12 @@ fn is_in_past(day: u32) -> bool {
 }
 
 fn read_cookie() -> String {
-    fs::read_to_string(".cookie").unwrap()
+    fs::read_to_string(".cookie")
+        .map_err(|e| AoCError::CookieFile(e))
+        .unwrap()
 }
 
-fn get_input(day: u32, part: u32) -> Result<String, days::AoCError> {
+fn get_input(day: u32, part: u32) -> Result<String, AoCError> {
     fs::read_to_string(input_filename(day, part))
         .or_else(|_| fs::read_to_string(input_filename(day, 1)))
         .or_else(|e| {
@@ -43,10 +46,11 @@ fn get_input(day: u32, part: u32) -> Result<String, days::AoCError> {
                     .and_then(|r| r.text())
                     .inspect(|content| {
                         let _ = fs::create_dir("input");
-                        let _ = fs::write(input_filename(day, part), content); })
-                    .map_err(days::AoCError::from)
+                        let _ = fs::write(input_filename(day, part), content);
+                    })
+                    .map_err(AoCError::from)
             } else {
-                 Err(days::AoCError::from(e))
+                Err(AoCError::from(e))
             }
         })
 }
