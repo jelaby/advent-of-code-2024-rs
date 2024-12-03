@@ -19,7 +19,31 @@ impl days::Day for Day {
             .sum())
     }
     fn part2(&self, input: &str) -> Option<i64> {
-        None
+        let mul_pattern = Regex::new(r"(?<op2>mul)\((?<p1>\d+),(?<p2>\d+)\)|(?<op0>do|don't)\(\)").unwrap();
+
+        let mut sum = 0i64;
+        let mut enabled = true;
+
+        for capture in mul_pattern.captures_iter(input) {
+            if let Some(op) = capture.name("op0") {
+                if op.as_str() == "do" {
+                    enabled = true;
+                } else if op.as_str() == "don't" {
+                    enabled = false;
+                }
+            } else if let Some(op) = capture.name("op2") {
+                if enabled {
+                    if op.as_str() == "mul" {
+                        if let Some(l) = capture.name("p1").and_then(|m| m.as_str().parse::<i64>().ok()) {
+                            if let Some(r) = capture.name("p2").and_then(|m| m.as_str().parse::<i64>().ok()) {
+                                sum += l * r
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        Some(sum)
     }
 }
 
@@ -35,7 +59,7 @@ mod tests {
     }
     #[test]
     fn part2_example1() {
-        let text = "";
-        assert_eq!(DAY.part2(text), Some(4))
+        let text = "xmul(2,4)&mul[3,7]!^don't()_mul(5,5)+mul(32,64](mul(11,8)undo()?mul(8,5))";
+        assert_eq!(DAY.part2(text), Some(48))
     }
 }
