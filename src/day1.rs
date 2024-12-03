@@ -3,7 +3,7 @@ use crate::days;
 pub struct Day;
 
 impl days::Day for Day {
-    fn day(&self) -> i32 {
+    fn day(&self) -> u32 {
         1
     }
 
@@ -11,7 +11,7 @@ impl days::Day for Day {
         let mut left = vec![];
         let mut right = vec![];
 
-        for line in input.split("\n") {
+        for line in input.split_terminator("\n") {
             let mut parts = line.split_whitespace();
             left.push(parts.next().unwrap().parse::<i64>().unwrap());
             right.push(parts.next().unwrap().parse::<i64>().unwrap());

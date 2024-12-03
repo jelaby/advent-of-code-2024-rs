@@ -56,7 +56,7 @@ enum Direction {
     Down,
 }
 impl days::Day for Day {
-    fn day(&self) -> i32 {
+    fn day(&self) -> u32 {
         2
     }
 

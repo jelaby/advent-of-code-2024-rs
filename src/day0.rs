@@ -4,13 +4,13 @@ pub struct Day;
 
 impl Day {
     fn short_fuse(&self, lines: &str) -> i64 {
-        let lines = lines.split("\n");
+        let lines = lines.split_terminator("\n");
         lines.count() as i64
     }
 }
 
 impl days::Day for Day {
-    fn day(&self) -> i32 {
+    fn day(&self) -> u32 {
         0
     }
 

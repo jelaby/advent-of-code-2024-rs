@@ -1,6 +1,15 @@
-pub trait Day {
+use thiserror::Error;
 
-    fn day(&self) -> i32;
+#[derive(Error, Debug)]
+pub enum AoCError {
+    #[error("an IO error occurred")]
+    Io(#[from] std::io::Error),
+    #[error("an HTTP error occurred")]
+    Http(#[from] reqwest::Error),
+}
+
+pub trait Day {
+    fn day(&self) -> u32;
     fn part1(&self, _lines: &str) -> Option<i64> {
         None
     }
