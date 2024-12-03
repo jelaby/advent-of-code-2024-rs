@@ -5,15 +5,16 @@ mod day2;
 mod day3;
 mod days;
 
-use reqwest;
+use crate::days::AoCError;
 use chrono;
+use chrono::NaiveDate;
+use reqwest;
 use std::fs;
 use std::string::ToString;
-use chrono::NaiveDate;
-use crate::days::AoCError;
 
 const NO_VALUE: &str = "-";
-const EASTERN_STANDARD_TIME: chrono::FixedOffset = chrono::FixedOffset::west_opt(4*60*60).unwrap();
+const EASTERN_STANDARD_TIME: chrono::FixedOffset =
+    chrono::FixedOffset::west_opt(4 * 60 * 60).unwrap();
 
 fn input_filename(day: u32, part: u32) -> String {
     format!("input/day{day}.txt")
@@ -21,9 +22,12 @@ fn input_filename(day: u32, part: u32) -> String {
 
 fn is_in_past(day: u32) -> bool {
     let now = chrono::Local::now();
-    let this_day = NaiveDate::from_ymd_opt(2024,12,day).unwrap()
-        .and_hms_opt(0, 0, 0).unwrap()
-        .and_local_timezone(EASTERN_STANDARD_TIME).unwrap();
+    let this_day = NaiveDate::from_ymd_opt(2024, 12, day)
+        .unwrap()
+        .and_hms_opt(0, 0, 0)
+        .unwrap()
+        .and_local_timezone(EASTERN_STANDARD_TIME)
+        .unwrap();
 
     now > this_day
 }

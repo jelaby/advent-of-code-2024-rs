@@ -2,11 +2,9 @@ use crate::days;
 
 pub struct Day;
 
-impl Day {
+impl Day {}
 
-}
-
-fn check_report(report: &Vec<i64>) -> bool{
+fn check_report(report: &Vec<i64>) -> bool {
     let mut direction = Direction::Unknown;
     let mut i = report.iter();
     let mut last = i.next().unwrap();
@@ -63,20 +61,23 @@ impl days::Day for Day {
     fn part1(&self, input: &str) -> Option<i64> {
         let reports = input
             .split_terminator("\n")
-            .map(|line| line.split_whitespace().map(|n| n.parse().unwrap()).collect())
+            .map(|line| {
+                line.split_whitespace()
+                    .map(|n| n.parse().unwrap())
+                    .collect()
+            })
             .collect::<Vec<Vec<i64>>>();
 
-        Some(
-            reports
-                .iter()
-                .filter(|r| check_report(r))
-                .count() as i64,
-        )
+        Some(reports.iter().filter(|r| check_report(r)).count() as i64)
     }
     fn part2(&self, input: &str) -> Option<i64> {
         let reports = input
             .split_terminator("\n")
-            .map(|line| line.split_whitespace().map(|n| n.parse().unwrap()).collect())
+            .map(|line| {
+                line.split_whitespace()
+                    .map(|n| n.parse().unwrap())
+                    .collect()
+            })
             .collect::<Vec<Vec<i64>>>();
 
         Some(
@@ -84,14 +85,18 @@ impl days::Day for Day {
                 .iter()
                 .filter(|report| {
                     if check_report(&report) {
-                        return true
+                        return true;
                     }
 
                     for i in 0..reports.len() {
-                        if check_report(&report.iter().enumerate()
-                            .filter(|(j, _)| i != *j)
-                            .map(|(_, &v)| v)
-                            .collect()) {
+                        if check_report(
+                            &report
+                                .iter()
+                                .enumerate()
+                                .filter(|(j, _)| i != *j)
+                                .map(|(_, &v)| v)
+                                .collect(),
+                        ) {
                             return true;
                         }
                     }

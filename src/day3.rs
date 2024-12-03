@@ -11,15 +11,21 @@ impl days::Day for Day {
     }
 
     fn part1(&self, input: &str) -> Option<i64> {
-
         let mul_pattern = Regex::new(r"mul\((\d+),(\d+)\)").unwrap();
 
-        Some(mul_pattern.captures_iter(input).map(|c| c.extract())
-            .map(|(_, [left, right])| left.parse::<i64>().unwrap() * right.parse::<i64>().unwrap())
-            .sum())
+        Some(
+            mul_pattern
+                .captures_iter(input)
+                .map(|c| c.extract())
+                .map(|(_, [left, right])| {
+                    left.parse::<i64>().unwrap() * right.parse::<i64>().unwrap()
+                })
+                .sum(),
+        )
     }
     fn part2(&self, input: &str) -> Option<i64> {
-        let mul_pattern = Regex::new(r"(?<op2>mul)\((?<p1>\d+),(?<p2>\d+)\)|(?<op0>do|don't)\(\)").unwrap();
+        let mul_pattern =
+            Regex::new(r"(?<op2>mul)\((?<p1>\d+),(?<p2>\d+)\)|(?<op0>do|don't)\(\)").unwrap();
 
         let mut sum = 0i64;
         let mut enabled = true;
@@ -34,8 +40,14 @@ impl days::Day for Day {
             } else if let Some(op) = capture.name("op2") {
                 if enabled {
                     if op.as_str() == "mul" {
-                        if let Some(l) = capture.name("p1").and_then(|m| m.as_str().parse::<i64>().ok()) {
-                            if let Some(r) = capture.name("p2").and_then(|m| m.as_str().parse::<i64>().ok()) {
+                        if let Some(l) = capture
+                            .name("p1")
+                            .and_then(|m| m.as_str().parse::<i64>().ok())
+                        {
+                            if let Some(r) = capture
+                                .name("p2")
+                                .and_then(|m| m.as_str().parse::<i64>().ok())
+                            {
                                 sum += l * r
                             }
                         }
