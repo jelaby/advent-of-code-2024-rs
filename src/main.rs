@@ -42,7 +42,9 @@ fn get_input(day: u32, part: u32) -> Result<String, days::AoCError> {
                     .header("Cookie", read_cookie())
                     .send()
                     .and_then(|r| r.text())
-                    .inspect(|content| { let _ = fs::write(input_filename(day, part), content); })
+                    .inspect(|content| {
+                        let _ = fs::create_dir("input");
+                        let _ = fs::write(input_filename(day, part), content); })
                     .map_err(days::AoCError::from)
             } else {
                  Err(days::AoCError::from(e))
