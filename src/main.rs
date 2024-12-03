@@ -3,6 +3,7 @@ extern crate core;
 mod day0;
 mod day1;
 mod day2;
+mod day3;
 mod days;
 
 use reqwest;
@@ -67,7 +68,8 @@ where
 }
 
 fn main() {
-    let days: [Box<dyn days::Day>; 3] = [
+    let days: [Box<dyn days::Day>; 4] = [
+        Box::new(day3::Day),
         Box::new(day2::Day),
         Box::new(day1::Day),
         Box::new(day0::Day),
