@@ -21,7 +21,7 @@ impl days::Day for Day {
 mod tests {
     use crate::days::Day;
 
-    const DAY: crate::day2::Day = crate::day2::Day;
+    const DAY: super::Day = super::Day;
     #[test]
     fn part1_example1() {
         let text = "";
