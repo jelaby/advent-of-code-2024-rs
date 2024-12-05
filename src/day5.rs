@@ -6,7 +6,7 @@ pub struct Day;
 
 impl Day {}
 
-fn parse(input: & str) -> (HashMap<i64, Vec<i64>>, Vec<Vec<i64>>) {
+fn parse(input: &str) -> (HashMap<i64, Vec<i64>>, Vec<Vec<i64>>) {
     let mut i = input.split("\n\n").map(|part| part.split_terminator('\n'));
 
     let rules = i
@@ -24,17 +24,30 @@ fn parse(input: & str) -> (HashMap<i64, Vec<i64>>, Vec<Vec<i64>>) {
             map
         });
 
-    let prints = i
-        .next()
-        .unwrap()
-        .map(|print| {
-            print
-                .split(",")
-                .map(|n| n.parse().unwrap())
-                .collect::<Vec<i64>>()
-        });
+    let prints = i.next().unwrap().map(|print| {
+        print
+            .split(",")
+            .map(|n| n.parse().unwrap())
+            .collect::<Vec<i64>>()
+    });
 
     (rules, prints.collect())
+}
+
+fn is_ordered(rules: &HashMap<i64, Vec<i64>>, print: &Vec<i64>) -> bool {
+    print
+        .iter()
+        .fold((None, true), |(last, ok), current| match last {
+            None => (Some(current), ok),
+            Some(last) => (
+                Some(current),
+                ok && rules
+                    .get(&last)
+                    .map(|followers| followers.contains(&current))
+                    .unwrap_or(false),
+            ),
+        })
+        .1
 }
 
 impl days::Day for Day {
@@ -46,22 +59,9 @@ impl days::Day for Day {
         let (rules, prints) = parse(input);
 
         Some(
-            prints.iter()
-                .filter(|print| {
-                    print
-                        .iter()
-                        .fold((None, true), |(last, ok), current| match last {
-                            None => (Some(current), ok),
-                            Some(last) => (
-                                Some(current),
-                                ok && rules
-                                    .get(&last)
-                                    .map(|followers| followers.contains(&current))
-                                    .unwrap_or(false),
-                            ),
-                        })
-                        .1
-                })
+            prints
+                .iter()
+                .filter(|&print| is_ordered(&rules, print))
                 .map(|print| print[print.len() / 2])
                 .sum(),
         )
@@ -70,22 +70,9 @@ impl days::Day for Day {
         let (rules, prints) = parse(input);
 
         Some(
-            prints.iter()
-                .filter(|print| {
-                    !print
-                        .iter()
-                        .fold((None, true), |(last, ok), current| match last {
-                            None => (Some(current), ok),
-                            Some(last) => (
-                                Some(current),
-                                ok && rules
-                                    .get(&last)
-                                    .map(|followers| followers.contains(&current))
-                                    .unwrap_or(false),
-                            ),
-                        })
-                        .1
-                })
+            prints
+                .iter()
+                .filter(|&print| !is_ordered(&rules, print))
                 .map(|print| {
                     let mut print = print.to_owned();
                     print.sort_by(|a, b| {
