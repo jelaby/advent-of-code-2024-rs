@@ -1,10 +1,41 @@
+use crate::days;
 use std::cmp::Ordering;
 use std::collections::HashMap;
-use crate::days;
 
 pub struct Day;
 
 impl Day {}
+
+fn parse(input: & str) -> (HashMap<i64, Vec<i64>>, Vec<Vec<i64>>) {
+    let mut i = input.split("\n\n").map(|part| part.split_terminator('\n'));
+
+    let rules = i
+        .next()
+        .unwrap()
+        .map(|rule| {
+            let mut rule = rule.split('|');
+            let first = rule.next().and_then(|n| n.parse::<i64>().ok()).unwrap();
+            let second = rule.next().and_then(|n| n.parse::<i64>().ok()).unwrap();
+
+            (first, second)
+        })
+        .fold(HashMap::new(), |mut map, (first, second)| {
+            map.entry(first).or_insert_with(Vec::new).push(second);
+            map
+        });
+
+    let prints = i
+        .next()
+        .unwrap()
+        .map(|print| {
+            print
+                .split(",")
+                .map(|n| n.parse().unwrap())
+                .collect::<Vec<i64>>()
+        });
+
+    (rules, prints.collect())
+}
 
 impl days::Day for Day {
     fn day(&self) -> u32 {
@@ -12,80 +43,67 @@ impl days::Day for Day {
     }
 
     fn part1(&self, input: &str) -> Option<i64> {
-        let mut i = input.split("\n\n").map(|part| part.split_terminator('\n'));
+        let (rules, prints) = parse(input);
 
-        let rules = i.next().unwrap()
-            .map(|rule| {
-                let mut rule = rule.split('|');
-                let first = rule.next().and_then(|n| n.parse::<i64>().ok()).unwrap();
-                let second = rule.next().and_then(|n| n.parse::<i64>().ok()).unwrap();
-
-                (first, second)
-            })
-            .fold(HashMap::new(), |mut map, (first, second)| {
-                map.entry(first).or_insert_with(Vec::new).push(second);
-                map
-            });
-        Some(i.next().unwrap()
-            .map(|print|
-                print.split(",")
-                    .map(|n| n.parse().unwrap())
-                    .collect::<Vec<i64>>())
-                 .filter(|print| print.iter()
-                    .fold((None, true), |(last, ok), current| {
-                        match last {
+        Some(
+            prints.iter()
+                .filter(|print| {
+                    print
+                        .iter()
+                        .fold((None, true), |(last, ok), current| match last {
                             None => (Some(current), ok),
-                            Some(last) => {
-                                (Some(current), ok && rules.get(&last).map(|followers| followers.contains(&current)).unwrap_or(false))
-                            },
-                        }
-                    }).1)
-            .map(|print| print[print.len()/2])
-            .sum())
+                            Some(last) => (
+                                Some(current),
+                                ok && rules
+                                    .get(&last)
+                                    .map(|followers| followers.contains(&current))
+                                    .unwrap_or(false),
+                            ),
+                        })
+                        .1
+                })
+                .map(|print| print[print.len() / 2])
+                .sum(),
+        )
     }
     fn part2(&self, input: &str) -> Option<i64> {
-        let mut i = input.split("\n\n").map(|part| part.split_terminator('\n'));
+        let (rules, prints) = parse(input);
 
-        let rules = i.next().unwrap()
-            .map(|rule| {
-                let mut rule = rule.split('|');
-                let first = rule.next().and_then(|n| n.parse::<i64>().ok()).unwrap();
-                let second = rule.next().and_then(|n| n.parse::<i64>().ok()).unwrap();
-
-                (first, second)
-            })
-            .fold(HashMap::new(), |mut map, (first, second)| {
-                map.entry(first).or_insert_with(Vec::new).push(second);
-                map
-            });
-
-        Some(i.next().unwrap()
-            .map(|print|
-                print.split(",")
-                    .map(|n| n.parse().unwrap())
-                    .collect::<Vec<i64>>())
-            .filter(|print| !print.iter()
-                .fold((None, true), |(last, ok), current| {
-                    match last {
-                        None => (Some(current), ok),
-                        Some(last) => {
-                            (Some(current), ok && rules.get(&last).map(|followers| followers.contains(&current)).unwrap_or(false))
-                        },
-                    }
-                }).1)
-            .map(|print| {
-                let mut print = print.to_owned();
-                print.sort_by(|a,b| {
-                    if rules.get(a).map(|followers| followers.contains(&b)).unwrap_or(false) {
-                        Ordering::Less
-                    } else {
-                        Ordering::Greater
-                    }
-                });
-                print
-            })
-            .map(|print| print[print.len()/2])
-            .sum())
+        Some(
+            prints.iter()
+                .filter(|print| {
+                    !print
+                        .iter()
+                        .fold((None, true), |(last, ok), current| match last {
+                            None => (Some(current), ok),
+                            Some(last) => (
+                                Some(current),
+                                ok && rules
+                                    .get(&last)
+                                    .map(|followers| followers.contains(&current))
+                                    .unwrap_or(false),
+                            ),
+                        })
+                        .1
+                })
+                .map(|print| {
+                    let mut print = print.to_owned();
+                    print.sort_by(|a, b| {
+                        if rules
+                            .get(a)
+                            .map(|followers| followers.contains(&b))
+                            .unwrap_or(false)
+                        {
+                            Ordering::Less
+                        } else {
+                            Ordering::Greater
+                        }
+                    });
+                    print
+                })
+                .map(|print| print[print.len() / 2])
+                .sum(),
+        )
     }
 }
 
