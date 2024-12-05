@@ -78,7 +78,40 @@ impl days::Day for Day {
         Some(result)
     }
     fn part2(&self, input: &str) -> Option<i64> {
-        None
+        let puzzle = {
+            let mut puzzle = vec![];
+
+            for line in input.split_terminator("\n") {
+                let mut chars = vec![];
+                for c in line.chars() {
+                    chars.push(c);
+                }
+                puzzle.push(chars);
+            }
+            puzzle
+        };
+
+        fn is_xmas(puzzle: &Vec<Vec<char>>, pos: (usize, usize)) -> bool {
+            let (x,y) = pos;
+            const MS:[char;2] = ['M','S'];
+
+            puzzle[y][x] == 'A'
+                && MS.contains(&puzzle[y-1][x-1]) && MS.contains(&puzzle[y+1][x+1])
+                && puzzle[y-1][x-1] != puzzle[y+1][x+1]
+                && MS.contains(&puzzle[y-1][x+1]) && MS.contains(&puzzle[y+1][x-1])
+                && puzzle[y-1][x+1] != puzzle[y+1][x-1]
+        }
+
+        let mut result = 0;
+        for y in 1..puzzle.len() - 1 {
+            for x in 1..puzzle[y].len() - 1 {
+                if is_xmas(&puzzle,(x,y)) {
+                    result += 1;
+                }
+            }
+        }
+
+        Some(result)
     }
 }
 
@@ -103,7 +136,16 @@ MXMXAXMASX";
     }
     #[test]
     fn part2_example1() {
-        let text = "";
-        assert_eq!(DAY.part2(text), Some(4))
+        let text = "MMMSXXMASM
+MSAMXMSMSA
+AMXSXMAAMM
+MSAMASMSMX
+XMASAMXAMM
+XXAMMXXAMA
+SMSMSASXSS
+SAXAMASAAA
+MAMMMXMMMM
+MXMXAXMASX";
+        assert_eq!(DAY.part2(text), Some(9))
     }
 }
