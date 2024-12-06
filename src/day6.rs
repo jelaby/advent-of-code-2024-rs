@@ -36,13 +36,14 @@ pub struct Day;
 
 impl Day {}
 
+
 fn parse(input: &str) -> (Vec<Vec<bool>>, Point, Point) {
     let map = input
         .split_terminator('\n')
         .map(|line| line.chars().map(|c| c == '#').collect::<Vec<bool>>())
         .collect::<Vec<_>>();
 
-    let mut p = input
+    let p = input
         .split_terminator('\n')
         .enumerate()
         .find_map(
@@ -53,35 +54,56 @@ fn parse(input: &str) -> (Vec<Vec<bool>>, Point, Point) {
         )
         .unwrap();
 
-    let mut d = Point::new(0, -1);
+    let d = Point::new(0, -1);
 
     (map, p, d)
+}
+
+struct MapIterator<'a> {
+    map: &'a Vec<Vec<bool>>,
+    p: Point,
+    d: Point
+}
+
+impl MapIterator<'_> {
+    fn new<'a>(map: &'a Vec<Vec<bool>>, p: &'_ Point, d: &'_ Point) -> MapIterator<'a> {
+        MapIterator { map, p: *p, d: *d }
+    }
+}
+
+impl Iterator for MapIterator<'_> {
+    type Item = Point;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        loop {
+            let p_next = self.p + self.d;
+
+            if p_next.y < 0
+                || p_next.y >= self.map.len() as i64
+                || p_next.x < 0
+                || p_next.x >= self.map[p_next.y as usize].len() as i64
+            {
+                return None;
+            }
+
+            if self.map[p_next.y as usize][p_next.x as usize] {
+                self.d = Point::new(self.d.y * -1, self.d.x);
+            } else {
+                self.p = p_next;
+                return Some(self.p);
+            }
+        }
+    }
 }
 
 fn find_visited(map: &Vec<Vec<bool>>, p: &Point, d: &Point) -> Vec<Vec<bool>> {
     let mut result = vec![vec![false; map[0].len()]; map.len()];
 
-    let mut p = *p;
-    let mut d = *d;
-
-    loop {
+    for p in MapIterator::new(map, p, d) {
         result[p.y as usize][p.x as usize] = true;
-        let p_next = p + d;
-
-        if p_next.y < 0
-            || p_next.y >= map.len() as i64
-            || p_next.x < 0
-            || p_next.x >= map[p_next.y as usize].len() as i64
-        {
-            return result;
-        }
-
-        if map[p_next.y as usize][p_next.x as usize] {
-            d = Point::new(d.y * -1, d.x);
-        } else {
-            p = p_next;
-        }
     }
+
+    result
 }
 
 fn does_it_loop(map: &Vec<Vec<bool>>, p: &Point, d: &Point) -> bool {
