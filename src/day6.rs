@@ -37,23 +37,23 @@ pub struct Day;
 impl Day {}
 
 fn parse(input: &str) -> (Vec<Vec<bool>>, Point, Point) {
-let map = input
-.split_terminator('\n')
-.map(|line| line.chars().map(|c| c == '#').collect::<Vec<bool>>())
-.collect::<Vec<_>>();
+    let map = input
+        .split_terminator('\n')
+        .map(|line| line.chars().map(|c| c == '#').collect::<Vec<bool>>())
+        .collect::<Vec<_>>();
 
-let mut p = input
-.split_terminator('\n')
-.enumerate()
-.find_map(
-|(y, line)| match line.chars().enumerate().find(|(_, c)| *c == '^') {
-Some((x, _)) => Some(Point::new(x as i64, y as i64)),
-None => None,
-},
-)
-.unwrap();
+    let mut p = input
+        .split_terminator('\n')
+        .enumerate()
+        .find_map(
+            |(y, line)| match line.chars().enumerate().find(|(_, c)| *c == '^') {
+                Some((x, _)) => Some(Point::new(x as i64, y as i64)),
+                None => None,
+            },
+        )
+        .unwrap();
 
-let mut d = Point::new(0, -1);
+    let mut d = Point::new(0, -1);
 
     (map, p, d)
 }
@@ -71,7 +71,8 @@ fn find_visited(map: &Vec<Vec<bool>>, p: &Point, d: &Point) -> Vec<Vec<bool>> {
         if p_next.y < 0
             || p_next.y >= map.len() as i64
             || p_next.x < 0
-            || p_next.x >= map[p_next.y as usize].len() as i64 {
+            || p_next.x >= map[p_next.y as usize].len() as i64
+        {
             return result;
         }
 
@@ -100,7 +101,8 @@ fn does_it_loop(map: &Vec<Vec<bool>>, p: &Point, d: &Point) -> bool {
         if p_next.y < 0
             || p_next.y >= map.len() as i64
             || p_next.x < 0
-            || p_next.x >= map[p_next.y as usize].len() as i64 {
+            || p_next.x >= map[p_next.y as usize].len() as i64
+        {
             return false;
         }
 
@@ -113,16 +115,21 @@ fn does_it_loop(map: &Vec<Vec<bool>>, p: &Point, d: &Point) -> bool {
 }
 
 fn display(map: &Vec<Vec<bool>>, visited: &Vec<Vec<bool>>) {
-    map.iter().zip(visited.iter())
+    map.iter()
+        .zip(visited.iter())
         .for_each(|(map_row, visited_row)| {
             print!("#");
-            map_row.iter().zip(visited_row.iter())
-                .for_each(|(m,r)| print!("{}", match (m,r) {
-                    (false, false) => ' ',
-                    (true, false) => '#',
-                    (false, true) => '.',
-                    (true, true) => '!',
-                }));
+            map_row.iter().zip(visited_row.iter()).for_each(|(m, r)| {
+                print!(
+                    "{}",
+                    match (m, r) {
+                        (false, false) => ' ',
+                        (true, false) => '#',
+                        (false, true) => '.',
+                        (true, true) => '!',
+                    }
+                )
+            });
             println!("#");
         });
 }
@@ -145,16 +152,20 @@ impl days::Day for Day {
         )
     }
     fn part2(&self, input: &str) -> Option<i64> {
-        let (map, p, d) = parse(input);
+        let (mut map, p, d) = parse(input);
+
+        let visited = find_visited(&map, &p, &d);
 
         let mut result = 0;
         for y in 0..map.len() {
             for x in 0..map[y].len() {
-                let mut map = map.clone();
-                map[y][x] = true;
+                if visited[y][x] {
+                    map[y][x] = true;
 
-                if does_it_loop(&map, &p, &d) {
-                    result += 1;
+                    if does_it_loop(&map, &p, &d) {
+                        result += 1;
+                    }
+                    map[y][x] = false;
                 }
             }
         }
