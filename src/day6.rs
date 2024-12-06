@@ -36,62 +36,106 @@ pub struct Day;
 
 impl Day {}
 
+fn parse(input: &str) -> (Vec<Vec<bool>>, Point, Point) {
+let map = input
+.split_terminator('\n')
+.map(|line| line.chars().map(|c| c == '#').collect::<Vec<bool>>())
+.collect::<Vec<_>>();
+
+let mut p = input
+.split_terminator('\n')
+.enumerate()
+.find_map(
+|(y, line)| match line.chars().enumerate().find(|(_, c)| *c == '^') {
+Some((x, _)) => Some(Point::new(x as i64, y as i64)),
+None => None,
+},
+)
+.unwrap();
+
+let mut d = Point::new(0, -1);
+
+    (map, p, d)
+}
+
+fn find_visited(map: &Vec<Vec<bool>>, p: &Point, d: &Point) -> Vec<Vec<bool>> {
+    let mut result = vec![vec![false; map[0].len()]; map.len()];
+
+    let mut p = *p;
+    let mut d = *d;
+
+    loop {
+        result[p.y as usize][p.x as usize] = true;
+        let p_next = p + d;
+
+        if p_next.y < 0
+            || p_next.y >= map.len() as i64
+            || p_next.x < 0
+            || p_next.x >= map[p_next.y as usize].len() as i64 {
+            return result;
+        }
+
+        if map[p_next.y as usize][p_next.x as usize] {
+            d = Point::new(d.y * -1, d.x);
+        } else {
+            p = p_next;
+        }
+    }
+}
+
+fn does_it_loop(map: &Vec<Vec<bool>>, p: &Point, d: &Point) -> bool {
+    let mut visits = vec![vec![Vec::<Point>::new(); map[0].len()]; map.len()];
+
+    let mut p = *p;
+    let mut d = *d;
+
+    loop {
+        if visits[p.y as usize][p.x as usize].contains(&d) {
+            return true;
+        } else {
+            visits[p.y as usize][p.x as usize].push(d);
+        }
+        let p_next = p + d;
+
+        if p_next.y < 0
+            || p_next.y >= map.len() as i64
+            || p_next.x < 0
+            || p_next.x >= map[p_next.y as usize].len() as i64 {
+            return false;
+        }
+
+        if map[p_next.y as usize][p_next.x as usize] {
+            d = Point::new(d.y * -1, d.x);
+        } else {
+            p = p_next;
+        }
+    }
+}
+
+fn display(map: &Vec<Vec<bool>>, visited: &Vec<Vec<bool>>) {
+    map.iter().zip(visited.iter())
+        .for_each(|(map_row, visited_row)| {
+            print!("#");
+            map_row.iter().zip(visited_row.iter())
+                .for_each(|(m,r)| print!("{}", match (m,r) {
+                    (false, false) => ' ',
+                    (true, false) => '#',
+                    (false, true) => '.',
+                    (true, true) => '!',
+                }));
+            println!("#");
+        });
+}
+
 impl days::Day for Day {
     fn day(&self) -> u32 {
         6
     }
 
     fn part1(&self, input: &str) -> Option<i64> {
-        let map = input
-            .split_terminator('\n')
-            .map(|line| line.chars().map(|c| c == '#').collect::<Vec<bool>>())
-            .collect::<Vec<_>>();
+        let (map, p, d) = parse(input);
 
-        let mut p = input
-            .split_terminator('\n')
-            .enumerate()
-            .find_map(
-                |(y, line)| match line.chars().enumerate().find(|(_, c)| *c == '^') {
-                    Some((x, _)) => Some(Point::new(x as i64, y as i64)),
-                    None => None,
-                },
-            )
-            .unwrap();
-
-        let mut d = Point::new(0, -1);
-
-        let mut result = vec![vec![false; map[0].len()]; map.len()];
-
-        loop {
-            result[p.y as usize][p.x as usize] = true;
-            let p_next = p + d;
-
-            if p_next.y < 0
-                || p_next.y >= map.len() as i64
-                || p_next.x < 0
-                || p_next.x >= map[p_next.y as usize].len() as i64 {
-                break;
-            }
-
-            if map[p_next.y as usize][p_next.x as usize] {
-                d = Point::new(d.y * -1, d.x);
-            } else {
-                p = p_next;
-            }
-        }
-
-        map.iter().zip(result.iter())
-            .for_each(|(map_row, result_row)| {
-                print!("#");
-                map_row.iter().zip(result_row.iter())
-                    .for_each(|(m,r)| print!("{}", match (m,r) {
-                        (false, false) => ' ',
-                        (true, false) => '#',
-                        (false, true) => '.',
-                        (true, true) => '!',
-                    }));
-                println!("#");
-            });
+        let result = find_visited(&map, &p, &d);
 
         Some(
             result
@@ -101,53 +145,7 @@ impl days::Day for Day {
         )
     }
     fn part2(&self, input: &str) -> Option<i64> {
-        let map = input
-            .split_terminator('\n')
-            .map(|line| line.chars().map(|c| c == '#').collect::<Vec<bool>>())
-            .collect::<Vec<_>>();
-
-        let p = input
-            .split_terminator('\n')
-            .enumerate()
-            .find_map(
-                |(y, line)| match line.chars().enumerate().find(|(_, c)| *c == '^') {
-                    Some((x, _)) => Some(Point::new(x as i64, y as i64)),
-                    None => None,
-                },
-            )
-            .unwrap();
-
-        let d = Point::new(0, -1);
-
-
-        fn does_it_loop(map: &Vec<Vec<bool>>, p: &Point, d: &Point) -> bool {
-            let mut visits = vec![vec![Vec::<Point>::new(); map[0].len()]; map.len()];
-
-            let mut p = *p;
-            let mut d = *d;
-
-            loop {
-                if visits[p.y as usize][p.x as usize].contains(&d) {
-                    return true;
-                } else {
-                    visits[p.y as usize][p.x as usize].push(d);
-                }
-                let p_next = p + d;
-
-                if p_next.y < 0
-                    || p_next.y >= map.len() as i64
-                    || p_next.x < 0
-                    || p_next.x >= map[p_next.y as usize].len() as i64 {
-                    return false;
-                }
-
-                if map[p_next.y as usize][p_next.x as usize] {
-                    d = Point::new(d.y * -1, d.x);
-                } else {
-                    p = p_next;
-                }
-            }
-        }
+        let (map, p, d) = parse(input);
 
         let mut result = 0;
         for y in 0..map.len() {
@@ -161,7 +159,7 @@ impl days::Day for Day {
             }
         }
 
-        return Some(result);
+        Some(result)
     }
 }
 
