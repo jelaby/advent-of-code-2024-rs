@@ -6,6 +6,7 @@ mod day3;
 mod day4;
 mod day5;
 mod days;
+mod day6;
 
 use crate::days::AoCError;
 use chrono;
@@ -79,7 +80,8 @@ where
 }
 
 fn main() {
-    let days: [Box<dyn days::Day>; 5] = [
+    let days: [Box<dyn days::Day>; 6] = [
+        Box::new(day6::Day),
         Box::new(day5::Day),
         Box::new(day4::Day),
         Box::new(day3::Day),
