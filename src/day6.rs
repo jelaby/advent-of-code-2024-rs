@@ -136,26 +136,6 @@ fn does_it_loop(map: &Vec<Vec<bool>>, p: &Point, d: &Point) -> bool {
     }
 }
 
-fn display(map: &Vec<Vec<bool>>, visited: &Vec<Vec<bool>>) {
-    map.iter()
-        .zip(visited.iter())
-        .for_each(|(map_row, visited_row)| {
-            print!("#");
-            map_row.iter().zip(visited_row.iter()).for_each(|(m, r)| {
-                print!(
-                    "{}",
-                    match (m, r) {
-                        (false, false) => ' ',
-                        (true, false) => '#',
-                        (false, true) => '.',
-                        (true, true) => '!',
-                    }
-                )
-            });
-            println!("#");
-        });
-}
-
 impl days::Day for Day {
     fn day(&self) -> u32 {
         6
