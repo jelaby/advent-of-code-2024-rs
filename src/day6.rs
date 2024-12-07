@@ -1,5 +1,6 @@
 use crate::days;
 use std::ops::Add;
+use enumset::{EnumSet, EnumSetType};
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 struct Point {
@@ -75,7 +76,7 @@ fn parse(input: &str) -> (Vec<Vec<bool>>, Point, Dir) {
     (map, p, d)
 }
 
-#[derive(Debug, PartialEq, Copy, Clone)]
+#[derive(Debug, EnumSetType)]
 enum Dir {
     Up, Down, Left, Right
 }
@@ -146,16 +147,16 @@ fn find_visited(map: &Vec<Vec<bool>>, p: &Point, d: &Dir) -> Vec<Vec<bool>> {
 }
 
 fn does_it_loop(map: &Vec<Vec<bool>>, p: &Point, d: &Dir) -> bool {
-    let mut visits = vec![vec![Vec::<Dir>::new(); map[0].len()]; map.len()];
+    let mut visits = vec![vec![EnumSet::<Dir>::new(); map[0].len()]; map.len()];
 
     let mut p = *p;
     let mut d = *d;
 
     loop {
-        if visits[p.y as usize][p.x as usize].contains(&d) {
+        if visits[p.y as usize][p.x as usize].contains(d) {
             return true;
         } else {
-            visits[p.y as usize][p.x as usize].push(d);
+            visits[p.y as usize][p.x as usize] |= d;
         }
         let p_next = p + d;
 
