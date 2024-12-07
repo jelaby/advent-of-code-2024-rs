@@ -5,9 +5,9 @@ mod day2;
 mod day3;
 mod day4;
 mod day5;
-mod days;
 mod day6;
 mod day7;
+mod days;
 
 use crate::days::AoCError;
 use chrono;
@@ -15,6 +15,7 @@ use chrono::NaiveDate;
 use reqwest;
 use std::fs;
 use std::string::ToString;
+use std::time::Instant;
 
 const NO_VALUE: &str = "-";
 const EASTERN_STANDARD_TIME: chrono::FixedOffset =
@@ -67,17 +68,12 @@ fn run_part<F>(day: u32, part: u32, run: F)
 where
     F: Fn(&str) -> Option<i64>,
 {
-    let content = get_input(day, part);
-    let result = match content {
-        Ok(content) => run(content.trim()),
-        Err(_) => None,
-    };
-    let result = match result {
-        Some(x) => &x.to_string(),
-        None => NO_VALUE,
-    };
-
-    print!("\tPart {part}:\t{result}");
+    if let Some((result, duration)) = get_input(day, part).ok().and_then(|content| {
+        let start = Instant::now();
+        run(content.trim()).map(|r| (r, Instant::now().duration_since(start)))
+    }) {
+        print!("\tPart {part}:\t{result}\t({duration:?}");
+    }
 }
 
 fn main() {
