@@ -14,10 +14,8 @@ use chrono;
 use chrono::NaiveDate;
 use reqwest;
 use std::fs;
-use std::string::ToString;
 use std::time::Instant;
 
-const NO_VALUE: &str = "-";
 const EASTERN_STANDARD_TIME: chrono::FixedOffset =
     chrono::FixedOffset::west_opt(4 * 60 * 60).unwrap();
 
