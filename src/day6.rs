@@ -32,12 +32,28 @@ impl Add for &Point {
     }
 }
 
+impl Add<&Dir> for &Point {
+    type Output = Point;
+
+    fn add(self, rhs: &Dir) -> Self::Output {
+        go(self, rhs)
+    }
+}
+
+impl Add<Dir> for Point {
+    type Output = Point;
+
+    fn add(self, rhs: Dir) -> Self::Output {
+        &self + &rhs
+    }
+}
+
 pub struct Day;
 
 impl Day {}
 
 
-fn parse(input: &str) -> (Vec<Vec<bool>>, Point, Point) {
+fn parse(input: &str) -> (Vec<Vec<bool>>, Point, Dir) {
     let map = input
         .split_terminator('\n')
         .map(|line| line.chars().map(|c| c == '#').collect::<Vec<bool>>())
@@ -54,19 +70,42 @@ fn parse(input: &str) -> (Vec<Vec<bool>>, Point, Point) {
         )
         .unwrap();
 
-    let d = Point::new(0, -1);
+    let d = Dir::Up;
 
     (map, p, d)
+}
+
+#[derive(Debug, PartialEq, Copy, Clone)]
+enum Dir {
+    Up, Down, Left, Right
+}
+
+fn go(p: &Point, d: &Dir) -> Point {
+    match d {
+        Dir::Up => Point::new(p.x, p.y - 1),
+        Dir::Down => Point::new(p.x, p.y + 1),
+        Dir::Left => Point::new(p.x - 1, p.y),
+        Dir::Right => Point::new(p.x + 1, p.y),
+    }
+}
+
+fn turn(d: &Dir) -> Dir {
+    match d {
+        Dir::Up => Dir::Right,
+        Dir::Down => Dir::Left,
+        Dir::Left => Dir::Up,
+        Dir::Right => Dir::Down,
+    }
 }
 
 struct MapIterator<'a> {
     map: &'a Vec<Vec<bool>>,
     p: Point,
-    d: Point
+    d: Dir
 }
 
 impl MapIterator<'_> {
-    fn new<'a>(map: &'a Vec<Vec<bool>>, p: &'_ Point, d: &'_ Point) -> MapIterator<'a> {
+    fn new<'a>(map: &'a Vec<Vec<bool>>, p: &'_ Point, d: &'_ Dir) -> MapIterator<'a> {
         MapIterator { map, p: *p, d: *d }
     }
 }
@@ -87,7 +126,7 @@ impl Iterator for MapIterator<'_> {
             }
 
             if self.map[p_next.y as usize][p_next.x as usize] {
-                self.d = Point::new(self.d.y * -1, self.d.x);
+                self.d = turn(&self.d);
             } else {
                 self.p = p_next;
                 return Some(self.p);
@@ -96,7 +135,7 @@ impl Iterator for MapIterator<'_> {
     }
 }
 
-fn find_visited(map: &Vec<Vec<bool>>, p: &Point, d: &Point) -> Vec<Vec<bool>> {
+fn find_visited(map: &Vec<Vec<bool>>, p: &Point, d: &Dir) -> Vec<Vec<bool>> {
     let mut result = vec![vec![false; map[0].len()]; map.len()];
 
     for p in MapIterator::new(map, p, d) {
@@ -106,8 +145,8 @@ fn find_visited(map: &Vec<Vec<bool>>, p: &Point, d: &Point) -> Vec<Vec<bool>> {
     result
 }
 
-fn does_it_loop(map: &Vec<Vec<bool>>, p: &Point, d: &Point) -> bool {
-    let mut visits = vec![vec![Vec::<Point>::new(); map[0].len()]; map.len()];
+fn does_it_loop(map: &Vec<Vec<bool>>, p: &Point, d: &Dir) -> bool {
+    let mut visits = vec![vec![Vec::<Dir>::new(); map[0].len()]; map.len()];
 
     let mut p = *p;
     let mut d = *d;
@@ -129,7 +168,7 @@ fn does_it_loop(map: &Vec<Vec<bool>>, p: &Point, d: &Point) -> bool {
         }
 
         if map[p_next.y as usize][p_next.x as usize] {
-            d = Point::new(d.y * -1, d.x);
+            d = turn(&d);
         } else {
             p = p_next;
         }
