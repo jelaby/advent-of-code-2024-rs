@@ -41,12 +41,15 @@ fn cat(a: i64, b: i64) -> i64 {
     a + b
 }
 
-const OP: [fn(i64,i64)->i64; 2] = [add, mul];
-const OP2: [fn(i64,i64)->i64; 3] = [add, mul, cat];
+const OP: [fn(i64, i64) -> i64; 2] = [add, mul];
+const OP2: [fn(i64, i64) -> i64; 3] = [add, mul, cat];
 
-fn is_possible_n(target: i64, items: &[i64], ops: &Vec<fn(i64,i64) -> i64>, total: i64) -> bool {
+fn is_possible_n(target: i64, items: &[i64], ops: &Vec<fn(i64, i64) -> i64>, total: i64) -> bool {
     if items.is_empty() {
         return target == total;
+    }
+    if total >= target {
+        return false;
     }
     for op in ops {
         if is_possible_n(target, &items[1..items.len()], ops, op(total, items[0])) {
@@ -69,7 +72,7 @@ impl days::Day for Day {
                 .iter()
                 .filter(|(total, values)| is_possible(*total, values, &OP.to_vec()))
                 .map(|(total, _)| total)
-                .sum()
+                .sum(),
         )
     }
     fn part2(&self, input: &str) -> Option<i64> {
@@ -80,7 +83,7 @@ impl days::Day for Day {
                 .iter()
                 .filter(|(total, values)| is_possible(*total, values, &OP2.to_vec()))
                 .map(|(total, _)| total)
-                .sum()
+                .sum(),
         )
     }
 }
