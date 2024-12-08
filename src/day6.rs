@@ -90,6 +90,15 @@ fn go(p: &Point, d: &Dir) -> Point {
     }
 }
 
+fn reverse(p: &Point, d: &Dir) -> Point {
+    match d {
+        Dir::Up => Point::new(p.x, p.y + 1),
+        Dir::Down => Point::new(p.x, p.y - 1),
+        Dir::Left => Point::new(p.x + 1, p.y),
+        Dir::Right => Point::new(p.x - 1, p.y),
+    }
+}
+
 fn turn(d: &Dir) -> Dir {
     match d {
         Dir::Up => Dir::Right,
@@ -112,7 +121,7 @@ impl MapIterator<'_> {
 }
 
 impl Iterator for MapIterator<'_> {
-    type Item = Point;
+    type Item = (Point, Dir);
 
     fn next(&mut self) -> Option<Self::Item> {
         loop {
@@ -130,7 +139,7 @@ impl Iterator for MapIterator<'_> {
                 self.d = turn(&self.d);
             } else {
                 self.p = p_next;
-                return Some(self.p);
+                return Some((self.p, self.d));
             }
         }
     }
@@ -139,7 +148,7 @@ impl Iterator for MapIterator<'_> {
 fn find_visited(map: &Vec<Vec<bool>>, p: &Point, d: &Dir) -> Vec<Vec<bool>> {
     let mut result = vec![vec![false; map[0].len()]; map.len()];
 
-    for p in MapIterator::new(map, p, d) {
+    for (p, _) in MapIterator::new(map, p, d) {
         result[p.y as usize][p.x as usize] = true;
     }
 
@@ -149,31 +158,15 @@ fn find_visited(map: &Vec<Vec<bool>>, p: &Point, d: &Dir) -> Vec<Vec<bool>> {
 fn does_it_loop(map: &Vec<Vec<bool>>, p: &Point, d: &Dir) -> bool {
     let mut visits = vec![vec![EnumSet::<Dir>::new(); map[0].len()]; map.len()];
 
-    let mut p = *p;
-    let mut d = *d;
-
-    loop {
+    for (p, d) in MapIterator::new(map, p, d) {
         if visits[p.y as usize][p.x as usize].contains(d) {
             return true;
         } else {
             visits[p.y as usize][p.x as usize] |= d;
         }
-        let p_next = p + d;
-
-        if p_next.y < 0
-            || p_next.y >= map.len() as i64
-            || p_next.x < 0
-            || p_next.x >= map[p_next.y as usize].len() as i64
-        {
-            return false;
-        }
-
-        if map[p_next.y as usize][p_next.x as usize] {
-            d = turn(&d);
-        } else {
-            p = p_next;
-        }
     }
+
+    return false;
 }
 
 impl days::Day for Day {
@@ -196,20 +189,14 @@ impl days::Day for Day {
     fn part2(&self, input: &str) -> Option<i64> {
         let (mut map, p, d) = parse(input);
 
-        let visited = find_visited(&map, &p, &d);
-
         let mut result = 0;
-        for y in 0..map.len() {
-            for x in 0..map[y].len() {
-                if visited[y][x] {
-                    map[y][x] = true;
+        for (p, d) in MapIterator::new(&map.clone(), &p, &d) {
+            map[p.y as usize][p.x as usize] = true;
 
-                    if does_it_loop(&map, &p, &d) {
-                        result += 1;
-                    }
-                    map[y][x] = false;
-                }
+            if does_it_loop(&map, &reverse(&p, &d), &d) {
+                result += 1;
             }
+            map[p.y as usize][p.x as usize] = false;
         }
 
         Some(result)
