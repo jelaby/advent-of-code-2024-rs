@@ -69,7 +69,7 @@ impl days::Day for Day {
 
         let mut antinodes = HashSet::new();
 
-        for (freq, antennae) in freq_antennae.iter() {
+        for (_, antennae) in freq_antennae.iter() {
             for a in antennae {
                 for b in antennae {
                     if a != b {
@@ -90,7 +90,45 @@ impl days::Day for Day {
         Some(antinodes.len() as i64)
     }
     fn part2(&self, input: &str) -> Option<i64> {
-        None
+        let freq_antennae = input.split_terminator('\n').enumerate()
+            .flat_map(|(y, line)| line.chars().enumerate()
+                .filter(|(_, c)| *c != '.')
+                .map(move |(x, c)| ((x, y), c)))
+            .fold(HashMap::new(), |mut m, ((x, y), c)| {
+                m.entry(c).or_insert_with(|| vec![]).push(Point{x: x as i64, y: y as i64});
+                m
+            });
+
+        let width = input.split_terminator('\n').next().unwrap().len() as i64;
+        let height = input.split_terminator('\n').count() as i64;
+
+        let mut antinodes = HashSet::new();
+
+        for (_, antennae) in freq_antennae.iter() {
+            for a in antennae {
+                for b in antennae {
+                    if a != b {
+                        let diff = b - a;
+
+                        let mut antinode = *a;
+                        while antinode.x >=0 && antinode.y >=0 && antinode.x < width && antinode.y < height {
+                            antinodes.insert(antinode);
+
+                            antinode = &antinode - &diff;
+                        }
+
+                        let mut antinode = *b;
+                        while antinode.x >=0 && antinode.y >=0 && antinode.x < width && antinode.y < height {
+                            antinodes.insert(antinode);
+
+                            antinode = &antinode + &diff;
+                        }
+                    }
+                }
+            }
+        }
+
+        Some(antinodes.len() as i64)
     }
 }
 
@@ -173,7 +211,35 @@ mod tests {
     }
     #[test]
     fn part2_example1() {
-        let text = "";
-        assert_eq!(DAY.part2(text), Some(4))
+        let text = "\
+T.........
+...T......
+.T........
+..........
+..........
+..........
+..........
+..........
+..........
+..........";
+        assert_eq!(DAY.part2(text), Some(9))
+    }
+    #[test]
+    fn part2_example2() {
+        let text = "\
+............
+........0...
+.....0......
+.......0....
+....0.......
+......A.....
+............
+............
+........A...
+.........A..
+............
+............
+";
+        assert_eq!(DAY.part2(text), Some(34))
     }
 }
