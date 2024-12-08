@@ -155,9 +155,8 @@ fn find_visited(map: &Vec<Vec<bool>>, p: &Point, d: &Dir) -> Vec<Vec<bool>> {
     result
 }
 
-fn does_it_loop(map: &Vec<Vec<bool>>, p: &Point, d: &Dir) -> bool {
-    let mut visits = vec![vec![EnumSet::<Dir>::new(); map[0].len()]; map.len()];
-
+fn does_it_loop(map: &Vec<Vec<bool>>, p: &Point, d: &Dir, visits: &Vec<Vec<EnumSet::<Dir>>>) -> bool {
+    let visits = &mut visits.clone();
     for (p, d) in MapIterator::new(map, p, d) {
         if visits[p.y as usize][p.x as usize].contains(d) {
             return true;
@@ -190,13 +189,15 @@ impl days::Day for Day {
         let (mut map, p, d) = parse(input);
 
         let mut result = 0;
+        let mut visits = vec![vec![EnumSet::<Dir>::new(); map[0].len()]; map.len()];
         for (p, d) in MapIterator::new(&map.clone(), &p, &d) {
             map[p.y as usize][p.x as usize] = true;
 
-            if does_it_loop(&map, &reverse(&p, &d), &d) {
+            if does_it_loop(&map, &reverse(&p, &d), &d, &visits) {
                 result += 1;
             }
             map[p.y as usize][p.x as usize] = false;
+            visits[p.y as usize][p.x as usize] |= d;
         }
 
         Some(result)
