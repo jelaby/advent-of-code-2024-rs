@@ -32,7 +32,17 @@ fn parse(input: &str) -> Vec<i32> {
         .collect()
 }
 
+fn is_big_enough_gap(map: &Vec<i32>, target: usize, size: usize) -> bool {
+    for target_end in target..min(map.len(), target + size) {
+        if map[target_end] >= 0 {
+            return false;
+        }
+    }
+    return true;
+}
+
 fn defrag(map: &mut Vec<i32>) {
+
     let mut contiguous_prefix = 0;
     let mut i = map.len() - 1;
     while i > contiguous_prefix {
@@ -59,16 +69,8 @@ fn defrag(map: &mut Vec<i32>) {
                     target += 1;
                 } else {
                     is_contiguous = false;
-                    fn is_ok(map: &Vec<i32>, target: usize, size: usize) -> bool {
-                        for target_end in target..min(map.len(), target + size) {
-                            if map[target_end] >= 0 {
-                                return false;
-                            }
-                        }
-                        return true;
-                    }
 
-                    if is_ok(&map, target, size) {
+                    if is_big_enough_gap(&map, target, size) {
                         for k in 0..size {
                             map[target + k] = map[j + k];
                             map[j + k] = -1;
