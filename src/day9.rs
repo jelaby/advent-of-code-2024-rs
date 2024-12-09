@@ -35,14 +35,13 @@ fn parse(input: &str) -> Vec<i32> {
 fn is_big_enough_gap(map: &Vec<i32>, target: usize, size: usize) -> Option<usize> {
     for target_end in target..min(map.len(), target + size) {
         if map[target_end] >= 0 {
-            return Some(target_end)
+            return Some(target_end);
         }
     }
-    return None
+    return None;
 }
 
 fn defrag(map: &mut Vec<i32>) {
-
     let mut contiguous_prefix = 0;
     let mut i = map.len() - 1;
     while i > contiguous_prefix {
@@ -72,10 +71,10 @@ fn defrag(map: &mut Vec<i32>) {
 
                     match is_big_enough_gap(&map, target, size) {
                         None => {
-                            map[target..target+size].fill(id);
+                            map[target..target + size].fill(id);
                             map[j..=i].fill(-1);
                             break 'mv;
-                        },
+                        }
                         Some(target_end) => {
                             target = target_end;
                         }
@@ -150,63 +149,63 @@ mod tests {
 
     #[test]
     fn defrag() {
-        let mut map = vec![0,0,-1,-1,1];
+        let mut map = vec![0, 0, -1, -1, 1];
         super::defrag(&mut map);
-        assert_eq!(map, [0,0,1,-1,-1]);
+        assert_eq!(map, [0, 0, 1, -1, -1]);
     }
 
     #[test]
     fn defrag_size_one() {
-        let mut map = vec![0,0,-1,-1,1,1,1,2,3,3,3];
+        let mut map = vec![0, 0, -1, -1, 1, 1, 1, 2, 3, 3, 3];
         super::defrag(&mut map);
-        assert_eq!(map, [0,0,2,-1,1,1,1,-1,3,3,3]);
+        assert_eq!(map, [0, 0, 2, -1, 1, 1, 1, -1, 3, 3, 3]);
     }
 
     #[test]
     fn defrag_size_one_exact() {
-        let mut map = vec![0,0,-1,1,1,1,2,3,3,3];
+        let mut map = vec![0, 0, -1, 1, 1, 1, 2, 3, 3, 3];
         super::defrag(&mut map);
-        assert_eq!(map, [0,0,2,1,1,1,-1,3,3,3]);
+        assert_eq!(map, [0, 0, 2, 1, 1, 1, -1, 3, 3, 3]);
     }
 
     #[test]
     fn defrag_exact_fit() {
-        let mut map = vec![0,0,-1,-1,1,1,2,2];
+        let mut map = vec![0, 0, -1, -1, 1, 1, 2, 2];
         super::defrag(&mut map);
-        assert_eq!(map, [0,0,2,2,1,1,-1,-1]);
+        assert_eq!(map, [0, 0, 2, 2, 1, 1, -1, -1]);
     }
 
     #[test]
     fn defrag_exact_fit_once() {
-        let mut map = vec![0,0,-1,-1,-1,1,1,2,2];
+        let mut map = vec![0, 0, -1, -1, -1, 1, 1, 2, 2];
         super::defrag(&mut map);
-        assert_eq!(map, [0,0,2,2,-1,1,1,-1,-1]);
+        assert_eq!(map, [0, 0, 2, 2, -1, 1, 1, -1, -1]);
     }
 
     #[test]
     fn defrag_fits_adjacent() {
-        let mut map = vec![0,0,-1,-1,1,1];
+        let mut map = vec![0, 0, -1, -1, 1, 1];
         super::defrag(&mut map);
-        assert_eq!(map, [0,0,1,1,-1,-1]);
+        assert_eq!(map, [0, 0, 1, 1, -1, -1]);
     }
     #[test]
     fn defrag_too_big_to_move_adjacent() {
-        let mut map = vec![0,0,-1,-1,1,1,1];
+        let mut map = vec![0, 0, -1, -1, 1, 1, 1];
         super::defrag(&mut map);
-        assert_eq!(map, [0,0,-1,-1,1,1,1]);
+        assert_eq!(map, [0, 0, -1, -1, 1, 1, 1]);
     }
 
     #[test]
     fn defrag_not_backwards() {
-        let mut map = vec![0,0,-1,1,1,-1,-1,2];
+        let mut map = vec![0, 0, -1, 1, 1, -1, -1, 2];
         super::defrag(&mut map);
-        assert_eq!(map, [0,0,2,1,1,-1,-1,-1]);
+        assert_eq!(map, [0, 0, 2, 1, 1, -1, -1, -1]);
     }
 
     #[test]
     fn defrag_step_target_bug() {
-        let mut map = vec![0,0,-1,1,1,-1,-1,-1,-1,2,2,2,2];
+        let mut map = vec![0, 0, -1, 1, 1, -1, -1, -1, -1, 2, 2, 2, 2];
         super::defrag(&mut map);
-        assert_eq!(map, [0,0,-1,1,1,2,2,2,2,-1,-1,-1,-1]);
+        assert_eq!(map, [0, 0, -1, 1, 1, 2, 2, 2, 2, -1, -1, -1, -1]);
     }
 }
