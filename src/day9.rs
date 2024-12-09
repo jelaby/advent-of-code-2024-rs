@@ -1,6 +1,6 @@
 use crate::days;
 use itertools::Itertools;
-use std::cmp::max;
+use std::cmp::{max, min};
 
 pub struct Day;
 
@@ -54,11 +54,72 @@ impl days::Day for Day {
             i -= 1;
         }
 
-        Some(map.iter()
-            .enumerate()
-            .map(|(i, id)| i as i64 * (max(*id as i64, 0)))
-            .sum())
-        } fn part2(&self, input: &str) -> Option<i64> { None
+        Some(
+            map.iter()
+                .enumerate()
+                .map(|(i, id)| i as i64 * (max(*id as i64, 0)))
+                .sum(),
+        )
+    }
+    fn part2(&self, input: &str) -> Option<i64> {
+        let mut map = parse(input);
+
+        let mut contiguous_prefix = 0;
+        let mut i = map.len() - 1;
+        while i > contiguous_prefix {
+            let id = map[i];
+            let mut j = i;
+            while j > 0 && map[j - 1] == id {
+                j -= 1;
+            }
+
+            if id >= 0 {
+                let size = i + 1 - j;
+
+                let mut target = contiguous_prefix;
+                let mut is_contiguous = true;
+
+                'mv: loop {
+                    if target >= i {
+                        break 'mv;
+                    }
+                    if map[target] >= 0 {
+                        target += 1;
+                        if is_contiguous {
+                            contiguous_prefix = target;
+                        }
+                    } else {
+                        is_contiguous = false;
+                        fn is_ok(map: &Vec<i32>, target: usize, size: usize) -> bool {
+                            for target_end in target..min(map.len(), target + size) {
+                                if map[target_end] >= 0 {
+                                    return false;
+                                }
+                            }
+                            return true;
+                        }
+
+                        if is_ok(&map, target, size) {
+                            for k in 0..size {
+                                map[target + k] = map[j + k];
+                                map[j + k] = -1;
+                            }
+                            break 'mv;
+                        } else {
+                            target += size;
+                        }
+                    }
+                }
+            }
+            i = j - 1;
+        }
+
+        Some(
+            map.iter()
+                .enumerate()
+                .map(|(i, id)| i as i64 * (max(*id as i64, 0)))
+                .sum(),
+        )
     }
 }
 
@@ -74,7 +135,7 @@ mod tests {
     }
     #[test]
     fn part2_example1() {
-        let text = "";
-        assert_eq!(DAY.part2(text), Some(4))
+        let text = "2333133121414131402";
+        assert_eq!(DAY.part2(text), Some(2858))
     }
 }
