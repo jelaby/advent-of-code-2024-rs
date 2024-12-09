@@ -32,13 +32,13 @@ fn parse(input: &str) -> Vec<i32> {
         .collect()
 }
 
-fn is_big_enough_gap(map: &Vec<i32>, target: usize, size: usize) -> bool {
+fn is_big_enough_gap(map: &Vec<i32>, target: usize, size: usize) -> Option<usize> {
     for target_end in target..min(map.len(), target + size) {
         if map[target_end] >= 0 {
-            return false;
+            return Some(target_end)
         }
     }
-    return true;
+    return None
 }
 
 fn defrag(map: &mut Vec<i32>) {
@@ -70,14 +70,15 @@ fn defrag(map: &mut Vec<i32>) {
                 } else {
                     is_contiguous = false;
 
-                    if is_big_enough_gap(&map, target, size) {
-                        for k in 0..size {
-                            map[target + k] = map[j + k];
-                            map[j + k] = -1;
+                    match is_big_enough_gap(&map, target, size) {
+                        None => {
+                            map[target..target+size].fill(id);
+                            map[j..=i].fill(-1);
+                            break 'mv;
+                        },
+                        Some(target_end) => {
+                            target = target_end;
                         }
-                        break 'mv;
-                    } else {
-                        target += 1;
                     }
                 }
             }
