@@ -1,7 +1,5 @@
 use crate::days;
-use std::cell::RefCell;
 use std::collections::HashSet;
-use std::rc::Rc;
 
 pub struct Day;
 
@@ -22,7 +20,7 @@ const DIRS: [(i64, i64); 4] = [(0, 1), (1, 0), (0, -1), (-1, 0)];
 
 fn find_score(
     map: &Vec<Vec<i32>>,
-    scores: &mut Vec<Vec<Option<Rc<HashSet<(usize, usize)>>>>>,
+    scores: &mut Vec<Vec<Option<HashSet<(usize, usize)>>>>,
     x: usize,
     y: usize,
 ) {
@@ -30,31 +28,27 @@ fn find_score(
     } else if map[y][x] == 9 {
         let mut result = HashSet::new();
         result.insert((x, y));
-        scores[y][x] = Some(Rc::new(result));
+        scores[y][x] = Some(result);
     } else {
         let score = DIRS
             .iter()
-            .filter_map(|&(dx, dy)| {
+            .filter(|&(dx, dy)| {
                 let (x2, y2) = (x as i64 + dx, y as i64 + dy);
-                if x2 >= 0
+                x2 >= 0
                     && x2 < map[y].len() as i64
                     && y2 >= 0
                     && y2 < map.len() as i64
                     && map[y2 as usize][x2 as usize] == map[y][x] + 1
-                {
-                    find_score(map, scores, x2 as usize, y2 as usize);
-                    scores[y2 as usize][x2 as usize].clone()
-                } else {
-                    None
-                }
             })
-            .fold(HashSet::new(), |mut acc, items| {
-                let _ = items.iter().for_each(|&item| {
-                    acc.insert(item);
+            .fold(HashSet::new(), |mut acc, &(dx, dy)| {
+                let (x2, y2) = ((x as i64 + dx) as usize, (y as i64 + dy) as usize);
+                find_score(map, scores, x2, y2);
+                let _ = scores[y2][x2].as_ref().unwrap().iter().for_each(|item| {
+                    acc.insert(*item);
                 });
                 acc
             });
-        scores[y][x] = Some(Rc::new(score));
+        scores[y][x] = Some(score);
     }
 }
 fn find_trailhead_score(
