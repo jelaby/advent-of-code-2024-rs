@@ -1,5 +1,7 @@
+use std::cell::{Cell, RefCell};
 use crate::days;
 use std::collections::HashSet;
+use std::rc::Rc;
 
 pub struct Day;
 
@@ -20,7 +22,7 @@ const DIRS: [(i64, i64); 4] = [(0, 1), (1, 0), (0, -1), (-1, 0)];
 
 fn find_score(
     map: &Vec<Vec<i32>>,
-    scores: &mut Vec<Vec<Option<HashSet<(usize, usize)>>>>,
+    scores: &mut Vec<Vec<Option<Rc<RefCell<HashSet<(usize, usize)>>>>>>,
     x: usize,
     y: usize,
 ) {
@@ -28,7 +30,7 @@ fn find_score(
     } else if map[y][x] == 9 {
         let mut result = HashSet::new();
         result.insert((x, y));
-        scores[y][x] = Some(result);
+        scores[y][x] = Some(Rc::new(RefCell::new(result)));
     } else {
         let score = DIRS
             .iter()
@@ -47,12 +49,12 @@ fn find_score(
                 }
             })
             .fold(HashSet::new(), |mut acc, items| {
-                items.into_iter().for_each(|item| {
+                let _ = items.borrow().iter().for_each(|&item| {
                     acc.insert(item);
                 });
                 acc
             });
-        scores[y][x] = Some(score);
+        scores[y][x] = Some(Rc::new(RefCell::new(score)));
     }
 }
 
@@ -73,7 +75,7 @@ impl days::Day for Day {
                         .filter(|&x| map[y][x] == 0)
                         .map(|x| {
                             find_score(&map, &mut scores, x, y);
-                            scores[y][x].clone().unwrap().len() as i64
+                            scores[y][x].clone().unwrap().borrow().len() as i64
                         })
                         .sum::<i64>()
                 })
