@@ -57,6 +57,40 @@ fn find_score(
         scores[y][x] = Some(Rc::new(RefCell::new(score)));
     }
 }
+fn find_trailhead_score(
+    map: &Vec<Vec<i32>>,
+    scores: &mut Vec<Vec<Option<i32>>>,
+    x: usize,
+    y: usize,
+) -> i32 {
+    if scores[y][x].is_some() {
+        return scores[y][x].unwrap();
+    } else if map[y][x] == 9 {
+        let mut result = HashSet::new();
+        result.insert((x, y));
+        scores[y][x] = Some(1);
+        return 1;
+    } else {
+        let score = DIRS
+            .iter()
+            .filter_map(|&(dx, dy)| {
+                let (x2, y2) = (x as i64 + dx, y as i64 + dy);
+                if x2 >= 0
+                    && x2 < map[y].len() as i64
+                    && y2 >= 0
+                    && y2 < map.len() as i64
+                    && map[y2 as usize][x2 as usize] == map[y][x] + 1
+                {
+                    Some(find_trailhead_score(map, scores, x2 as usize, y2 as usize))
+                } else {
+                    None
+                }
+            })
+            .sum();
+        scores[y][x] = Some(score);
+        return score;
+    }
+}
 
 impl days::Day for Day {
     fn day(&self) -> u32 {
@@ -83,7 +117,20 @@ impl days::Day for Day {
         )
     }
     fn part2(&self, input: &str) -> Option<i64> {
-        None
+        let map = parse(input);
+
+        let mut scores = vec![vec![None; map[0].len()]; map.len()];
+
+        Some(
+            (0..map.len())
+                .map(|y| {
+                    (0..map[y].len())
+                        .filter(|&x| map[y][x] == 0)
+                        .map(|x| find_trailhead_score(&map, &mut scores, x, y) as i64)
+                        .sum::<i64>()
+                })
+                .sum(),
+        )
     }
 }
 
@@ -123,7 +170,15 @@ mod tests {
     }
     #[test]
     fn part2_example1() {
-        let text = "";
-        assert_eq!(DAY.part2(text), Some(4))
+        let text = "\
+89010123
+78121874
+87430965
+96549874
+45678903
+32019012
+01329801
+10456732";
+        assert_eq!(DAY.part2(text), Some(81))
     }
 }
