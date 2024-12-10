@@ -1,5 +1,5 @@
-use std::cell::{Cell, RefCell};
 use crate::days;
+use std::cell::RefCell;
 use std::collections::HashSet;
 use std::rc::Rc;
 
@@ -43,7 +43,7 @@ fn find_score(
                     && map[y2 as usize][x2 as usize] == map[y][x] + 1
                 {
                     find_score(map, scores, x2 as usize, y2 as usize);
-                    scores[y][x].clone()
+                    scores[y2 as usize][x2 as usize].clone()
                 } else {
                     None
                 }

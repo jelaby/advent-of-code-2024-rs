@@ -78,7 +78,8 @@ where
 }
 
 fn main() {
-    let days: [Box<dyn days::Day>; 9] = [
+    let days: [Box<dyn days::Day>; 10] = [
+        Box::new(day10::Day),
         Box::new(day9::Day),
         Box::new(day8::Day),
         Box::new(day7::Day),
