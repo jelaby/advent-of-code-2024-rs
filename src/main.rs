@@ -79,7 +79,7 @@ where
 }
 
 fn main() {
-    let days: [Box<dyn days::Day>; 11] = [
+    let days: Vec<Box<dyn days::Day>> = vec![
         Box::new(day11::Day),
         Box::new(day10::Day),
         Box::new(day9::Day),
