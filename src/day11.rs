@@ -1,4 +1,5 @@
 use std::cmp::max;
+use std::collections::HashMap;
 use crate::days;
 
 pub struct Day;
@@ -23,34 +24,41 @@ fn get_length(i: i64) -> usize {
     return max(result, 1);
 }
 
-fn iterate(stones: &Vec<i64>) -> Vec<i64> {
-    stones
-        .iter()
-        .flat_map(|&stone| {
-            if stone == 0 {
-                return vec![1];
+fn count_splits(stone: i64, iterations: usize) -> usize {
+    count_splits_cached(stone, iterations, &mut HashMap::new())
+}
+fn count_splits_cached(stone: i64, iterations: usize, cache: &mut HashMap<(i64,usize),usize>) -> usize {
+    if iterations == 0 {
+        1
+    } else {
+        match cache.get(&(stone, iterations)) {
+            Some(count) => *count,
+            None => {
+                let count = {
+                    if stone == 0 {
+                        count_splits_cached(1, iterations - 1, cache)
+                    } else {
+                        let length = get_length(stone);
+                        if length % 2 == 0 {
+                            let divisor = num::pow(10, length / 2);
+                            count_splits_cached(stone / divisor, iterations - 1, cache)
+                                + count_splits_cached(stone % divisor, iterations - 1, cache)
+                        } else {
+                            count_splits_cached(stone * 2024, iterations - 1, cache)
+                        }
+                    }
+                };
+                cache.insert((stone, iterations), count);
+                count
             }
-
-            let length = get_length(stone);
-            if length % 2 == 0 {
-                let divisor = num::pow(10, length / 2);
-                return vec![stone / divisor, stone % divisor];
-            }
-
-            return vec![stone * 2024];
-        })
-        .fold(Vec::with_capacity(stones.len() * 2), |mut acc, stone| {
-            acc.push(stone);
-            acc
-        })
+        }
+    }
 }
 
-fn iterate_n(stones: Vec<i64>, count: usize) -> Vec<i64> {
-    let mut stones = stones.clone();
-    for _ in 0..count {
-        stones = iterate(&stones);
-    }
-    return stones;
+fn iterate_n(stones: &Vec<i64>, count: usize) -> usize {
+    stones.iter()
+        .map(|&stone| count_splits(stone, count))
+        .sum()
 }
 
 impl days::Day for Day {
@@ -60,10 +68,11 @@ impl days::Day for Day {
 
     fn part1(&self, input: &str) -> Option<i64> {
         let stones = parse(input);
-        Some(iterate_n(stones, 25).len() as i64)
+        Some(iterate_n(&stones, 25) as i64)
     }
     fn part2(&self, input: &str) -> Option<i64> {
-        None
+        let stones = parse(input);
+        Some(iterate_n(&stones, 75) as i64)
     }
 }
 
@@ -78,33 +87,19 @@ mod tests {
         assert_eq!(DAY.part1(text), Some(55312))
     }
     #[test]
-    fn part1_example1_breakdown() {
+    fn part1_example1_breakdown2() {
         let stones = super::parse("125 17");
-        let stones = super::iterate(&stones);
-        assert_eq!(stones, vec![253000, 1, 7]);
-        let stones = super::iterate(&stones);
-        assert_eq!(stones, vec![253, 0, 2024, 14168]);
-        let stones = super::iterate(&stones);
-        assert_eq!(stones, vec![512072, 1, 20, 24, 28676032]);
-        let stones = super::iterate(&stones);
-        assert_eq!(stones, vec![512, 72, 2024, 2, 0, 2, 4, 2867, 6032]);
-        let stones = super::iterate(&stones);
-        assert_eq!(
-            stones,
-            vec![1036288, 7, 2, 20, 24, 4048, 1, 4048, 8096, 28, 67, 60, 32]
-        );
-        let stones = super::iterate(&stones);
-        assert_eq!(
-            stones,
-            vec![
-                2097446912, 14168, 4048, 2, 0, 2, 4, 40, 48, 2024, 40, 48, 80, 96, 2, 8, 6, 7, 6,
-                0, 3, 2
-            ]
-        );
+        assert_eq!(super::iterate_n(&stones, 0), 2);
+        assert_eq!(super::iterate_n(&stones, 1), 3);
+        assert_eq!(super::iterate_n(&stones, 2), 4);
+        assert_eq!(super::iterate_n(&stones, 3), 5);
+        assert_eq!(super::iterate_n(&stones, 4), 9);
+        assert_eq!(super::iterate_n(&stones, 5), 13);
+        assert_eq!(super::iterate_n(&stones, 6), 22);
     }
     #[test]
     fn part2_example1() {
-        let text = "";
-        assert_eq!(DAY.part2(text), Some(4))
+        let text = "125 17";
+        assert_eq!(DAY.part2(text), Some(65601038650482))
     }
 }
