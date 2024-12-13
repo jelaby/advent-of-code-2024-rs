@@ -14,7 +14,6 @@ mod day7;
 mod day8;
 mod day9;
 mod days;
-mod vector;
 
 use crate::days::AoCError;
 use chrono;

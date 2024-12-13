@@ -1,26 +1,26 @@
 use crate::days;
-use crate::vector::Vector;
 use itertools::Itertools;
 use regex::Regex;
 use std::sync::LazyLock;
+use nalgebra::Vector2;
 
 pub struct Day;
 
 impl Day {}
 
 struct Machine {
-    a: Vector,
-    b: Vector,
-    prize: Vector,
+    a: Vector2<i64>,
+    b: Vector2<i64>,
+    prize: Vector2<i64>,
 }
 
 fn parse(input: &str) -> Vec<Machine> {
     static PATTERN: LazyLock<Regex> =
         LazyLock::new(|| Regex::new(r"\w+: X[=+](?<x>\d+), Y[=+](?<y>\d+)").unwrap());
 
-    fn to_vector(line: &str) -> Vector {
+    fn to_vector(line: &str) -> Vector2<i64> {
         let caps = PATTERN.captures(line).unwrap();
-        Vector::new(caps["x"].parse().unwrap(), caps["y"].parse().unwrap())
+        Vector2::new(caps["x"].parse().unwrap(), caps["y"].parse().unwrap())
     }
 
     input
@@ -115,7 +115,7 @@ impl days::Day for Day {
                 .map(|m| Machine {
                     a: m.a,
                     b: m.b,
-                    prize: Vector::new(m.prize.x + 10000000000000, m.prize.y + 10000000000000),
+                    prize: Vector2::new(m.prize.x + 10000000000000, m.prize.y + 10000000000000),
                 })
                 .filter_map(|m| find_moves(&m))
                 .map(|(a, b)| a * 3 + b)

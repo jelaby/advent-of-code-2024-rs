@@ -1,53 +1,10 @@
 use crate::days;
 use std::collections::{HashMap, HashSet};
-use std::ops::{Add, Sub};
+use nalgebra::Vector2;
 
 pub struct Day;
 
 impl Day {}
-
-#[derive(Debug, Eq, PartialEq, Hash, Clone, Copy)]
-struct Point {
-    x: i64,
-    y: i64,
-}
-#[derive(Debug, Eq, PartialEq, Hash, Clone, Copy)]
-struct Vector {
-    x: i64,
-    y: i64,
-}
-
-impl Sub<&Point> for &Point {
-    type Output = Vector;
-
-    fn sub(self, rhs: &Point) -> Self::Output {
-        Vector { x: self.x - rhs.x, y: self.y - rhs.y }
-    }
-}
-
-impl Sub<Point> for Point {
-    type Output = Vector;
-
-    fn sub(self, rhs: Point) -> Self::Output {
-        &self - &rhs
-    }
-}
-
-impl Add<&Vector> for &Point {
-    type Output = Point;
-
-    fn add(self, rhs: &Vector) -> Self::Output {
-        Point { x: self.x + rhs.x, y: self.y + rhs.y }
-    }
-}
-
-impl Sub<&Vector> for &Point {
-    type Output = Point;
-
-    fn sub(self, rhs: &Vector) -> Self::Output {
-        Point { x: self.x - rhs.x, y: self.y - rhs.y }
-    }
-}
 
 impl days::Day for Day {
     fn day(&self) -> u32 {
@@ -60,7 +17,7 @@ impl days::Day for Day {
                 .filter(|(_, c)| *c != '.')
                 .map(move |(x, c)| ((x, y), c)))
             .fold(HashMap::new(), |mut m, ((x, y), c)| {
-                m.entry(c).or_insert_with(|| vec![]).push(Point{x: x as i64, y: y as i64});
+                m.entry(c).or_insert_with(|| vec![]).push(Vector2::new(x as i64, y as i64));
                 m
             });
 
@@ -95,7 +52,7 @@ impl days::Day for Day {
                 .filter(|(_, c)| *c != '.')
                 .map(move |(x, c)| ((x, y), c)))
             .fold(HashMap::new(), |mut m, ((x, y), c)| {
-                m.entry(c).or_insert_with(|| vec![]).push(Point{x: x as i64, y: y as i64});
+                m.entry(c).or_insert_with(|| vec![]).push(Vector2::new(x as i64, y as i64));
                 m
             });
 

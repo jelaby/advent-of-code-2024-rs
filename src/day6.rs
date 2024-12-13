@@ -1,60 +1,13 @@
 use crate::days;
-use std::ops::Add;
 use enumset::{EnumSet, EnumSetType};
-
-#[derive(Copy, Clone, Eq, PartialEq, Debug)]
-struct Point {
-    x: i64,
-    y: i64,
-}
-
-impl Point {
-    fn new(x: i64, y: i64) -> Point {
-        Point { x, y }
-    }
-}
-
-impl Add for Point {
-    type Output = Point;
-
-    fn add(self, rhs: Self) -> Self::Output {
-        &self + &rhs
-    }
-}
-
-impl Add for &Point {
-    type Output = Point;
-
-    fn add(self, rhs: Self) -> Self::Output {
-        Point {
-            x: self.x + rhs.x,
-            y: self.y + rhs.y,
-        }
-    }
-}
-
-impl Add<&Dir> for &Point {
-    type Output = Point;
-
-    fn add(self, rhs: &Dir) -> Self::Output {
-        go(self, rhs)
-    }
-}
-
-impl Add<Dir> for Point {
-    type Output = Point;
-
-    fn add(self, rhs: Dir) -> Self::Output {
-        &self + &rhs
-    }
-}
+use nalgebra::Vector2;
+use std::ops::{Add, Sub};
 
 pub struct Day;
 
 impl Day {}
 
-
-fn parse(input: &str) -> (Vec<Vec<bool>>, Point, Dir) {
+fn parse(input: &str) -> (Vec<Vec<bool>>, Vector2<i64>, Dir) {
     let map = input
         .split_terminator('\n')
         .map(|line| line.chars().map(|c| c == '#').collect::<Vec<bool>>())
@@ -65,7 +18,7 @@ fn parse(input: &str) -> (Vec<Vec<bool>>, Point, Dir) {
         .enumerate()
         .find_map(
             |(y, line)| match line.chars().enumerate().find(|(_, c)| *c == '^') {
-                Some((x, _)) => Some(Point::new(x as i64, y as i64)),
+                Some((x, _)) => Some(Vector2::new(x as i64, y as i64)),
                 None => None,
             },
         )
@@ -78,24 +31,35 @@ fn parse(input: &str) -> (Vec<Vec<bool>>, Point, Dir) {
 
 #[derive(Debug, EnumSetType)]
 enum Dir {
-    Up, Down, Left, Right
+    Up,
+    Down,
+    Left,
+    Right,
 }
 
-fn go(p: &Point, d: &Dir) -> Point {
-    match d {
-        Dir::Up => Point::new(p.x, p.y - 1),
-        Dir::Down => Point::new(p.x, p.y + 1),
-        Dir::Left => Point::new(p.x - 1, p.y),
-        Dir::Right => Point::new(p.x + 1, p.y),
+impl<T: Copy + Sub<T, Output=R> + Add<T, Output=R> + From<i32>, R: Copy + From<T>> Add<Dir> for Vector2<T> {
+    type Output = Vector2<R>;
+
+    fn add(self, rhs: Dir) -> Self::Output {
+        match rhs {
+            Dir::Up => Vector2::new(self[0].into(), self[1] - 1.into()),
+            Dir::Down => Vector2::new(self[0].into(), self[1] + 1.into()),
+            Dir::Left => Vector2::new(self[0] - 1.into(), self[1].into()),
+            Dir::Right => Vector2::new(self[0] + 1.into(), self[1].into()),
+        }
     }
 }
 
-fn reverse(p: &Point, d: &Dir) -> Point {
-    match d {
-        Dir::Up => Point::new(p.x, p.y + 1),
-        Dir::Down => Point::new(p.x, p.y - 1),
-        Dir::Left => Point::new(p.x + 1, p.y),
-        Dir::Right => Point::new(p.x - 1, p.y),
+impl<T: Copy + Sub<T, Output=R> + Add<T, Output=R> + From<i32>, R: Copy + From<T>> Sub<Dir> for Vector2<T> {
+    type Output = Vector2<R>;
+
+    fn sub(self, rhs: Dir) -> Self::Output {
+        match rhs {
+            Dir::Up => Vector2::new(self[0].into(), self[1] + 1.into()),
+            Dir::Down => Vector2::new(self[0].into(), self[1] - 1.into()),
+            Dir::Left => Vector2::new(self[0] + 1.into(), self[1].into()),
+            Dir::Right => Vector2::new(self[0] - 1.into(), self[1].into()),
+        }
     }
 }
 
@@ -110,18 +74,18 @@ fn turn(d: &Dir) -> Dir {
 
 struct MapIterator<'a> {
     map: &'a Vec<Vec<bool>>,
-    p: Point,
-    d: Dir
+    p: Vector2<i64>,
+    d: Dir,
 }
 
 impl MapIterator<'_> {
-    fn new<'a>(map: &'a Vec<Vec<bool>>, p: &'_ Point, d: &'_ Dir) -> MapIterator<'a> {
+    fn new<'a>(map: &'a Vec<Vec<bool>>, p: &'_ Vector2<i64>, d: &'_ Dir) -> MapIterator<'a> {
         MapIterator { map, p: *p, d: *d }
     }
 }
 
 impl Iterator for MapIterator<'_> {
-    type Item = (Point, Dir);
+    type Item = (Vector2<i64>, Dir);
 
     fn next(&mut self) -> Option<Self::Item> {
         loop {
@@ -145,7 +109,7 @@ impl Iterator for MapIterator<'_> {
     }
 }
 
-fn find_visited(map: &Vec<Vec<bool>>, p: &Point, d: &Dir) -> Vec<Vec<bool>> {
+fn find_visited(map: &Vec<Vec<bool>>, p: &Vector2<i64>, d: &Dir) -> Vec<Vec<bool>> {
     let mut result = vec![vec![false; map[0].len()]; map.len()];
 
     for (p, _) in MapIterator::new(map, p, d) {
@@ -155,7 +119,12 @@ fn find_visited(map: &Vec<Vec<bool>>, p: &Point, d: &Dir) -> Vec<Vec<bool>> {
     result
 }
 
-fn does_it_loop(map: &Vec<Vec<bool>>, p: &Point, d: &Dir, visits: &Vec<Vec<EnumSet::<Dir>>>) -> bool {
+fn does_it_loop(
+    map: &Vec<Vec<bool>>,
+    p: &Vector2<i64>,
+    d: &Dir,
+    visits: &Vec<Vec<EnumSet<Dir>>>,
+) -> bool {
     let visits = &mut visits.clone();
     for (p, d) in MapIterator::new(map, p, d) {
         if visits[p.y as usize][p.x as usize].contains(d) {
@@ -193,7 +162,7 @@ impl days::Day for Day {
         for (p, d) in MapIterator::new(&map.clone(), &p, &d) {
             map[p.y as usize][p.x as usize] = true;
 
-            if does_it_loop(&map, &reverse(&p, &d), &d, &visits) {
+            if does_it_loop(&map, &(p - d), &d, &visits) {
                 result += 1;
             }
             map[p.y as usize][p.x as usize] = false;
