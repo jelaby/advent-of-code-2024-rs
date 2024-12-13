@@ -1,8 +1,8 @@
-use std::sync::LazyLock;
 use crate::days;
 use crate::vector::Vector;
 use itertools::Itertools;
 use regex::Regex;
+use std::sync::LazyLock;
 
 pub struct Day;
 
@@ -15,7 +15,8 @@ struct Machine {
 }
 
 fn parse(input: &str) -> Vec<Machine> {
-    static PATTERN: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\w+: X[=+](?<x>\d+), Y[=+](?<y>\d+)").unwrap());
+    static PATTERN: LazyLock<Regex> =
+        LazyLock::new(|| Regex::new(r"\w+: X[=+](?<x>\d+), Y[=+](?<y>\d+)").unwrap());
 
     fn to_vector(line: &str) -> Vector {
         let caps = PATTERN.captures(line).unwrap();
@@ -24,7 +25,8 @@ fn parse(input: &str) -> Vec<Machine> {
 
     input
         .lines()
-        .chunks(4).into_iter()
+        .chunks(4)
+        .into_iter()
         .map(|mut chunk| Machine {
             a: to_vector(chunk.next().unwrap()),
             b: to_vector(chunk.next().unwrap()),
@@ -32,7 +34,6 @@ fn parse(input: &str) -> Vec<Machine> {
         })
         .collect()
 }
-
 
 /*
 
@@ -65,19 +66,18 @@ o = py.ax - px.ay
     ax.by - bx.ay
  */
 
-fn find_moves(m: &Machine) -> Option<(i64,i64)> {
-
+fn find_moves(m: &Machine) -> Option<(i64, i64)> {
     let a = m.a;
     let b = m.b;
     let p = m.prize;
 
-    let rem = (p.y*a.x - p.x*a.y) % (a.x*b.y - b.x * a.y);
+    let rem = (p.y * a.x - p.x * a.y) % (a.x * b.y - b.x * a.y);
 
     if rem != 0 {
         return None;
     }
 
-    let o = (p.y*a.x - p.x*a.y) / (a.x*b.y - b.x * a.y);
+    let o = (p.y * a.x - p.x * a.y) / (a.x * b.y - b.x * a.y);
 
     let rem = (p.x - o * b.x) % a.x;
 
@@ -98,13 +98,29 @@ impl days::Day for Day {
     fn part1(&self, input: &str) -> Option<i64> {
         let machines = parse(input);
 
-        Some(machines.iter()
-            .filter_map(|m| find_moves(m))
-            .map(|(a,b)| a*3 + b)
-            .sum())
+        Some(
+            machines
+                .iter()
+                .filter_map(|m| find_moves(m))
+                .map(|(a, b)| a * 3 + b)
+                .sum(),
+        )
     }
     fn part2(&self, input: &str) -> Option<i64> {
-        None
+        let machines = parse(input);
+
+        Some(
+            machines
+                .iter()
+                .map(|m| Machine {
+                    a: m.a,
+                    b: m.b,
+                    prize: Vector::new(m.prize.x + 10000000000000, m.prize.y + 10000000000000),
+                })
+                .filter_map(|m| find_moves(&m))
+                .map(|(a, b)| a * 3 + b)
+                .sum(),
+        )
     }
 }
 
@@ -135,7 +151,22 @@ Prize: X=18641, Y=10279";
     }
     #[test]
     fn part2_example1() {
-        let text = "";
-        assert_eq!(DAY.part2(text), Some(4))
+        let text = "\
+Button A: X+94, Y+34
+Button B: X+22, Y+67
+Prize: X=8400, Y=5400
+
+Button A: X+26, Y+66
+Button B: X+67, Y+21
+Prize: X=12748, Y=12176
+
+Button A: X+17, Y+86
+Button B: X+84, Y+37
+Prize: X=7870, Y=6450
+
+Button A: X+69, Y+23
+Button B: X+27, Y+71
+Prize: X=18641, Y=10279";
+        assert_eq!(DAY.part2(text), Some(875318608908))
     }
 }
