@@ -5,6 +5,7 @@ mod day10;
 mod day11;
 mod day12;
 mod day13;
+mod day14;
 mod day2;
 mod day3;
 mod day4;
@@ -82,6 +83,7 @@ where
 
 fn main() {
     let days: Vec<Box<dyn days::Day>> = vec![
+        Box::new(day14::Day),
         Box::new(day13::Day),
         Box::new(day12::Day),
         Box::new(day11::Day),
