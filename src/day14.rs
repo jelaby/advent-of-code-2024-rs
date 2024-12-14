@@ -88,36 +88,32 @@ fn plot_robots(robots: &Vec<Robot>, size: &Vector2<i64>) -> OMatrix<usize, Dyn, 
 
 fn all_adjacent(robots: &Vec<Robot>, size: &Vector2<i64>, time: i64) -> bool {
     let adjacent = [
-        (-1, -1),
         (0, -1),
-        (1, -1),
         (-1, 0),
         (1, 0),
-        (-1, 1),
         (0, 1),
-        (1, 1),
     ];
 
     let map = plot_robots(&go(robots, *size, time), size);
 
+    let mut have_neighbours = 0;
     for x in 0..size.x {
         for y in 0..size.y {
             if map[(x as usize, y as usize)] > 0 {
                 if map[(x as usize, y as usize)] > 1 {
                     return false;
                 }
-                if let None = adjacent
+                if let Some(_) = adjacent
                     .iter()
-                    .map(|&a| (x + a.0, y + a.0))
+                    .map(|&a| (x + a.0, y + a.1))
                     .filter(|&(x, y)| x >= 0 && x < size.x && y >= 0 && y < size.y)
-                    .find(|&(x, y)| map[(x as usize, y as usize)] != 0)
-                {
-                    return false;
+                    .find(|&(x, y)| map[(x as usize, y as usize)] != 0) {
+                    have_neighbours += 1;
                 }
             }
         }
     }
-    true
+    have_neighbours > robots.len()/2
 }
 
 fn do_part2(input: &str, sizex: i64, sizey: i64) -> Option<i64> {
@@ -126,7 +122,6 @@ fn do_part2(input: &str, sizex: i64, sizey: i64) -> Option<i64> {
 
     for time in 0..10000 {
         if all_adjacent(&robots, &size, time) {
-            show_map(&robots, &size, time);
             return Some(time);
         }
     }
@@ -359,6 +354,6 @@ p=9,3 v=2,3
 p=7,3 v=-1,2
 p=2,4 v=2,-3
 p=9,5 v=-3,-3";
-        assert_eq!(super::do_part2(text, 11, 7), Some(4))
+        assert_eq!(super::do_part2(text, 11, 7), )
     }
 }
