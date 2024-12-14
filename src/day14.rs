@@ -1,5 +1,5 @@
 use crate::days;
-use nalgebra::{DMatrix, Vector2};
+use nalgebra::{DMatrix, Dyn, OMatrix, Vector2};
 use regex::Regex;
 use std::sync::LazyLock;
 
@@ -76,18 +76,75 @@ fn do_part1(input: &str, sizex: i64, sizey: i64) -> Option<i64> {
     Some(safety_factor(&go(&parse(input), size, 100), size))
 }
 
-fn show_map(robots: &Vec<Robot>, size: &Vector2<i64>, time:i64) {
+fn plot_robots(robots: &Vec<Robot>, size: &Vector2<i64>) -> OMatrix<usize, Dyn, Dyn> {
+    let mut result = DMatrix::<usize>::zeros(size.x as usize, size.y as usize);
 
+    robots
+        .iter()
+        .for_each(|r| result[(r.p.x as usize, r.p.y as usize)] += 1);
+
+    result
+}
+
+fn all_adjacent(robots: &Vec<Robot>, size: &Vector2<i64>, time: i64) -> bool {
+    let adjacent = [
+        (-1, -1),
+        (0, -1),
+        (1, -1),
+        (-1, 0),
+        (1, 0),
+        (-1, 1),
+        (0, 1),
+        (1, 1),
+    ];
+
+    let map = plot_robots(&go(robots, *size, time), size);
+
+    for x in 0..size.x {
+        for y in 0..size.y {
+            if map[(x as usize, y as usize)] > 0 {
+                if map[(x as usize, y as usize)] > 1 {
+                    return false;
+                }
+                if let None = adjacent
+                    .iter()
+                    .map(|&a| (x + a.0, y + a.0))
+                    .filter(|&(x, y)| x >= 0 && x < size.x && y >= 0 && y < size.y)
+                    .find(|&(x, y)| map[(x as usize, y as usize)] != 0)
+                {
+                    return false;
+                }
+            }
+        }
+    }
+    true
+}
+
+fn do_part2(input: &str, sizex: i64, sizey: i64) -> Option<i64> {
+    let size = Vector2::new(sizex, sizey);
+    let robots = parse(input);
+
+    for time in 0..10000 {
+        if all_adjacent(&robots, &size, time) {
+            show_map(&robots, &size, time);
+            return Some(time);
+        }
+    }
+    None
+}
+
+fn show_map(robots: &Vec<Robot>, size: &Vector2<i64>, time: i64) {
     let robots = go(robots, *size, time);
 
     let mut result = DMatrix::<usize>::zeros(size.x as usize, size.y as usize);
 
-    robots.iter()
-        .for_each(|r| result[(r.p.x as usize,r.p.y as usize)] += 1);
+    robots
+        .iter()
+        .for_each(|r| result[(r.p.x as usize, r.p.y as usize)] += 1);
 
-    for x in 0..size.x as usize {
-        for y in 0..size.y as usize {
-            if result[(x,y)] > 0 {
+    for y in 0..size.y as usize {
+        for x in 0..size.x as usize {
+            if result[(x, y)] > 0 {
                 print!("#");
             } else {
                 print!(" ");
@@ -106,32 +163,7 @@ impl days::Day for Day {
         do_part1(input, 101, 103)
     }
     fn part2(&self, input: &str) -> Option<i64> {
-
-        let robots = parse(input);
-
-        let stdin = std::io::stdin();
-        let mut t = 100;
-        let size = Vector2::new(101,103);
-
-        show_map(&robots, &size, t);
-
-        loop {
-            let mut line = String::new();
-            line.clear();
-            stdin.read_line(&mut line).unwrap();
-
-            for line in line.lines() {
-                if line.trim() == "q" {
-                    return Some(t);
-                }
-
-                if let Ok(new_t) = line.trim().parse() {
-                    t = new_t;
-
-                    show_map(&robots, &size, t);
-                }
-            }
-        }
+        do_part2(input, 101, 103)
     }
 }
 
@@ -327,6 +359,6 @@ p=9,3 v=2,3
 p=7,3 v=-1,2
 p=2,4 v=2,-3
 p=9,5 v=-3,-3";
-        assert_eq!(DAY.part2(text), Some(4))
+        assert_eq!(super::do_part2(text, 11, 7), Some(4))
     }
 }
