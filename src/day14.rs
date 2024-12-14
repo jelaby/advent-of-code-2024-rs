@@ -1,5 +1,5 @@
 use crate::days;
-use nalgebra::Vector2;
+use nalgebra::{DMatrix, Vector2};
 use regex::Regex;
 use std::sync::LazyLock;
 
@@ -76,6 +76,27 @@ fn do_part1(input: &str, sizex: i64, sizey: i64) -> Option<i64> {
     Some(safety_factor(&go(&parse(input), size, 100), size))
 }
 
+fn show_map(robots: &Vec<Robot>, size: &Vector2<i64>, time:i64) {
+
+    let robots = go(robots, *size, time);
+
+    let mut result = DMatrix::<usize>::zeros(size.x as usize, size.y as usize);
+
+    robots.iter()
+        .for_each(|r| result[(r.p.x as usize,r.p.y as usize)] += 1);
+
+    for x in 0..size.x as usize {
+        for y in 0..size.y as usize {
+            if result[(x,y)] > 0 {
+                print!("#");
+            } else {
+                print!(" ");
+            }
+        }
+        println!();
+    }
+}
+
 impl days::Day for Day {
     fn day(&self) -> u32 {
         14
@@ -85,7 +106,32 @@ impl days::Day for Day {
         do_part1(input, 101, 103)
     }
     fn part2(&self, input: &str) -> Option<i64> {
-        None
+
+        let robots = parse(input);
+
+        let stdin = std::io::stdin();
+        let mut t = 100;
+        let size = Vector2::new(101,103);
+
+        show_map(&robots, &size, t);
+
+        loop {
+            let mut line = String::new();
+            line.clear();
+            stdin.read_line(&mut line).unwrap();
+
+            for line in line.lines() {
+                if line.trim() == "q" {
+                    return Some(t);
+                }
+
+                if let Ok(new_t) = line.trim().parse() {
+                    t = new_t;
+
+                    show_map(&robots, &size, t);
+                }
+            }
+        }
     }
 }
 
