@@ -87,33 +87,29 @@ fn plot_robots(robots: &Vec<Robot>, size: &Vector2<i64>) -> OMatrix<usize, Dyn, 
 }
 
 fn all_adjacent(robots: &Vec<Robot>, size: &Vector2<i64>, time: i64) -> bool {
-    let adjacent = [
-        (0, -1),
-        (-1, 0),
-        (1, 0),
-        (0, 1),
-    ];
+    let adjacent = [(0, -1), (-1, 0), (1, 0), (0, 1)];
 
-    let map = plot_robots(&go(robots, *size, time), size);
+    let robots = go(robots, *size, time);
+
+    let map = plot_robots(&robots, size);
 
     let mut have_neighbours = 0;
-    for x in 0..size.x {
-        for y in 0..size.y {
-            if map[(x as usize, y as usize)] > 0 {
-                if map[(x as usize, y as usize)] > 1 {
-                    return false;
-                }
-                if let Some(_) = adjacent
-                    .iter()
-                    .map(|&a| (x + a.0, y + a.1))
-                    .filter(|&(x, y)| x >= 0 && x < size.x && y >= 0 && y < size.y)
-                    .find(|&(x, y)| map[(x as usize, y as usize)] != 0) {
-                    have_neighbours += 1;
-                }
-            }
+    for p in robots.iter().map(|r| r.p) {
+        let x = p.x;
+        let y = p.y;
+        if map[(x as usize, y as usize)] > 1 {
+            return false;
+        }
+        if let Some(_) = adjacent
+            .iter()
+            .map(|&a| (x + a.0, y + a.1))
+            .filter(|&(x, y)| x >= 0 && x < size.x && y >= 0 && y < size.y)
+            .find(|&(x, y)| map[(x as usize, y as usize)] != 0)
+        {
+            have_neighbours += 1;
         }
     }
-    have_neighbours > robots.len()/2
+    have_neighbours > robots.len() / 2
 }
 
 fn do_part2(input: &str, sizex: i64, sizey: i64) -> Option<i64> {
@@ -166,7 +162,6 @@ impl days::Day for Day {
 mod tests {
     use crate::day14::Robot;
     use crate::day14::{do_part1, go};
-    use crate::days::Day;
     use nalgebra::Vector2;
 
     const DAY: super::Day = super::Day;
@@ -338,22 +333,5 @@ p=9,5 v=-3,-3";
         assert(4, 3, None);
 
         assert(0, 0, Some(0));
-    }
-    #[test]
-    fn part2_example1() {
-        let text = "\
-p=0,4 v=3,-3
-p=6,3 v=-1,-3
-p=10,3 v=-1,2
-p=2,0 v=2,-1
-p=0,0 v=1,3
-p=3,0 v=-2,-2
-p=7,6 v=-1,-3
-p=3,0 v=-1,-2
-p=9,3 v=2,3
-p=7,3 v=-1,2
-p=2,4 v=2,-3
-p=9,5 v=-3,-3";
-        assert_eq!(super::do_part2(text, 11, 7), )
     }
 }
