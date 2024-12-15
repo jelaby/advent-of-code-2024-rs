@@ -15,6 +15,7 @@ mod day7;
 mod day8;
 mod day9;
 mod days;
+mod day15;
 
 use crate::days::AoCError;
 use chrono;
@@ -83,6 +84,7 @@ where
 
 fn main() {
     let days: Vec<Box<dyn days::Day>> = vec![
+        Box::new(day15::Day),
         Box::new(day14::Day),
         Box::new(day13::Day),
         Box::new(day12::Day),
