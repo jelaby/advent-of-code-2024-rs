@@ -1,7 +1,10 @@
 use crate::days;
+use itertools::Itertools;
 use num::abs;
 use pathfinding::prelude::astar;
-use std::collections::HashSet;
+use priority_queue::PriorityQueue;
+use std::cmp::Reverse;
+use std::collections::{HashMap, LinkedList};
 
 pub struct Day;
 
@@ -61,68 +64,79 @@ fn find_shortest_route(map: &Vec<Vec<char>>, start: (i32, i32), end: (i32, i32))
 fn routes_to_goal(
     map: &Vec<Vec<char>>,
     max_cost: i32,
-    visited: &mut Vec<Vec<bool>>,
-    passed: &mut HashSet<((i32, i32), (i32, i32))>,
-    cost: i32,
-    p: (i32, i32),
-    d: (i32, i32),
+    start: (i32, i32),
+    start_dir: (i32, i32),
     end: (i32, i32),
-) -> bool {
-    if cost > max_cost {
-        return false;
-    }
-    if map[p.1 as usize][p.0 as usize] == '#' {
-        return false;
-    }
-    if map[p.1 as usize][p.0 as usize] == 'E' {
-        return true;
+) -> Vec<Vec<bool>> {
+    let mut visited = HashMap::new();
+
+    let mut queue: PriorityQueue<((i32, i32), (i32, i32), i32), Reverse<i32>> =
+        PriorityQueue::new();
+
+    fn push(
+        queue: &mut PriorityQueue<((i32, i32), (i32, i32), i32), Reverse<i32>>,
+        p: (i32, i32),
+        d: (i32, i32),
+        cost: i32,
+        end: (i32, i32),
+    ) {
+        queue.push((p, d, cost), Reverse(abs(p.0 - end.0) + abs(p.1 - end.1)));
     }
 
-    if passed.contains(&(p, d)) {
-        return false;
+    push(&mut queue, start, start_dir, 0, end);
+
+    while !queue.is_empty() {
+        let ((p, d, cost), _) = queue.pop().unwrap();
+
+        if cost > max_cost {
+            continue;
+        } else if map[p.1 as usize][p.0 as usize] == '#' {
+            continue;
+        } else if map[p.1 as usize][p.0 as usize] == 'E' {
+            visited.insert((p, d), cost);
+            continue;
+        } else {
+            if let Some(&old_cost) = visited.get(&(p, d)) {
+                if old_cost <= cost {
+                    continue;
+                }
+            }
+
+            visited.insert((p, d), cost);
+
+            push(&mut queue, (p.0 + d.0, p.1 + d.1), d, cost + 1, end);
+            push(&mut queue, p, (d.1, d.0), cost + 1000, end);
+            push(&mut queue, p, (-d.1, -d.0), cost + 1000, end);
+        }
     }
-    passed.insert((p, d));
 
-    let result1= routes_to_goal(
-        map,
-        max_cost,
-        visited,
-        passed,
-        cost + 1,
-        (p.0 + d.0, p.1 + d.1),
-        d,
-        end,
-    );
-    let d2 = (d.1, d.0);
-    let result2 = routes_to_goal(
-        map,
-        max_cost,
-        visited,
-        passed,
-        cost + 1001,
-        (p.0 + d.1, p.1 + d.0),
-        (d.1, d.0),
-        end,
-    );
-    let result3 = routes_to_goal(
-        map,
-        max_cost,
-        visited,
-        passed,
-        cost + 1001,
-        (p.0 - d.1, p.1 - d.0),
-        (-d.1, -d.0),
-        end,
-    );
+    let mut queue = LinkedList::new();
+    let mut result = vec![vec![false; map[0].len()]; map.len()];
 
-    passed.remove(&(p, d));
-
-    if result1 || result2 || result3 {
-        visited[p.1 as usize][p.0 as usize] = true;
-        return true;
-    } else {
-        return false;
+    for dir in [(1, 0), (0, 1), (-1, 0), (0, -1)] {
+        if visited.contains_key(&(end, dir)) {
+            queue.push_back((end, dir, max_cost));
+        }
     }
+
+    while !queue.is_empty() {
+        let (p, d, cost) = queue.pop_back().unwrap();
+
+        match visited.get(&(p, d)) {
+            Some(&other_cost) => {
+                if other_cost == cost {
+                    result[p.1 as usize][p.0 as usize] = true;
+
+                    queue.push_back(((p.0 - d.0, p.1 - d.1), d, cost - 1));
+                    queue.push_back((p, (d.1, d.0), cost - 1000));
+                    queue.push_back((p, (-d.1, -d.0), cost - 1000));
+                }
+            }
+            None => {}
+        }
+    }
+
+    return result;
 }
 
 fn show_routes(map: &Vec<Vec<char>>, visited: &Vec<Vec<bool>>) {
@@ -150,12 +164,9 @@ impl days::Day for Day {
     fn part2(&self, input: &str) -> Option<i64> {
         let (map, start, end) = parse(input);
 
-        let mut visited = vec![vec![false; map[0].len()]; map.len()];
-        let mut passed = HashSet::new();
-
         let max_cost = find_shortest_route(&map, start, end);
 
-        routes_to_goal(&map, max_cost as i32, &mut visited, &mut passed,0, start, (1, 0), end);
+        let mut visited = routes_to_goal(&map, max_cost as i32, start, (1, 0), end);
 
         show_routes(&map, &visited);
 
@@ -259,5 +270,23 @@ mod tests {
 #S#.............#
 #################";
         assert_eq!(DAY.part2(text), Some(64))
+    }
+    #[test]
+    fn part2_small() {
+        let text = "\
+####
+#.E#
+#S.#
+####";
+        assert_eq!(DAY.part2(text), Some(3))
+    }
+    #[test]
+    fn part2_small2() {
+        let text = "\
+#####
+#..E#
+#S.##
+#####";
+        assert_eq!(DAY.part2(text), Some(5))
     }
 }
