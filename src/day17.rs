@@ -31,6 +31,18 @@ impl Machine {
     }
 }
 
+impl Machine {
+    fn new(a: i32, b: i32, c: i32) -> Machine {
+        Machine {
+            a,
+            b,
+            c,
+            i: 0,
+            output: vec![],
+        }
+    }
+}
+
 enum OpCode {
     ADV,
     BXL,
@@ -47,13 +59,13 @@ impl OpCode {
         match self {
             OpCode::ADV => machine.a = machine.a / pow(2, machine.combo(operand) as usize),
             OpCode::BXL => machine.b = machine.b ^ operand,
-            OpCode::BST => machine.b = operand & 0x7,
+            OpCode::BST => machine.b = machine.combo(operand) & 0x7,
             OpCode::JNZ => {
                 if machine.a != 0 {
                     machine.i = operand - 2
                 }
             }
-            OpCode::BXC => machine.b = machine.b & machine.c,
+            OpCode::BXC => machine.b = machine.b ^ machine.c,
             OpCode::OUT => machine.output.push(machine.combo(operand) & 0x7),
             OpCode::BDV => machine.b = machine.a / pow(2, machine.combo(operand) as usize),
             OpCode::CDV => machine.c = machine.a / pow(2, machine.combo(operand) as usize),
@@ -147,9 +159,16 @@ impl days::Day for Day {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
     use crate::days::Day;
 
     const DAY: super::Day = super::Day;
+    #[test]
+    fn part1_example0() {
+        let mut machine = Machine::new(0, 2024, 43690);
+        opcode_for(4).execute(&mut machine, 0);
+        assert_eq!(machine.b, 44354)
+    }
     #[test]
     fn part1_example1() {
         let text = "\
