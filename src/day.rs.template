@@ -6,7 +6,7 @@ impl Day {}
 
 impl days::Day for Day {
     fn day(&self) -> u32 {
-        3
+        x
     }
 
     fn part1(&self, input: &str) -> Option<i64> {
