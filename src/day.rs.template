@@ -9,10 +9,10 @@ impl days::Day for Day {
         x
     }
 
-    fn part1(&self, input: &str) -> Option<i64> {
+    fn part1(&self, input: &str) -> Option<String> {
         None
     }
-    fn part2(&self, input: &str) -> Option<i64> {
+    fn part2(&self, input: &str) -> Option<String> {
         None
     }
 }
@@ -25,11 +25,11 @@ mod tests {
     #[test]
     fn part1_example1() {
         let text = "";
-        assert_eq!(DAY.part1(text), Some(2))
+        assert_eq!(DAY.part1(text), Some("2".to_string()))
     }
     #[test]
     fn part2_example1() {
         let text = "";
-        assert_eq!(DAY.part2(text), Some(4))
+        assert_eq!(DAY.part2(text), Some("4".to_string()))
     }
 }

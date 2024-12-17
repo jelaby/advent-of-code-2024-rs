@@ -6,6 +6,8 @@ mod day11;
 mod day12;
 mod day13;
 mod day14;
+mod day15;
+mod day16;
 mod day2;
 mod day3;
 mod day4;
@@ -15,8 +17,6 @@ mod day7;
 mod day8;
 mod day9;
 mod days;
-mod day15;
-mod day16;
 
 use crate::days::AoCError;
 use chrono;
@@ -73,7 +73,7 @@ fn get_input(day: u32, part: u32) -> Result<String, AoCError> {
 
 fn run_part<F>(day: u32, part: u32, run: F)
 where
-    F: Fn(&str) -> Option<i64>,
+    F: Fn(&str) -> Option<String>,
 {
     if let Some((result, duration)) = get_input(day, part).ok().and_then(|content| {
         let start = Instant::now();
@@ -84,31 +84,31 @@ where
 }
 
 fn main() {
-    let days: Vec<Box<dyn days::Day>> = vec![
-        Box::new(day16::Day),
-        Box::new(day15::Day),
-        Box::new(day14::Day),
-        Box::new(day13::Day),
-        Box::new(day12::Day),
-        Box::new(day11::Day),
-        Box::new(day10::Day),
-        Box::new(day9::Day),
-        Box::new(day8::Day),
-        Box::new(day7::Day),
-        Box::new(day6::Day),
-        Box::new(day5::Day),
-        Box::new(day4::Day),
-        Box::new(day3::Day),
-        Box::new(day2::Day),
-        Box::new(day1::Day),
+    let days: Vec<Box<&dyn days::Day>> = vec![
+        Box::new(&day16::Day),
+        Box::new(&day15::Day),
+        Box::new(&day14::Day),
+        Box::new(&day13::Day),
+        Box::new(&day12::Day),
+        Box::new(&day11::Day),
+        Box::new(&day10::Day),
+        Box::new(&day9::Day),
+        Box::new(&day8::Day),
+        Box::new(&day7::Day),
+        Box::new(&day6::Day),
+        Box::new(&day5::Day),
+        Box::new(&day4::Day),
+        Box::new(&day3::Day),
+        Box::new(&day2::Day),
+        Box::new(&day1::Day),
     ];
 
     for day in days {
         let number = day.day();
 
         print!("Day {number}:");
-        run_part(number, 2, |l| day.part2(l));
-        run_part(number, 1, |l| day.part1(l));
+        run_part(number, 2, |l| day.part2(l).map(|r| r.to_string()));
+        run_part(number, 1, |l| day.part1(l).map(|r| r.to_string()));
         println!();
     }
 }

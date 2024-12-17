@@ -58,7 +58,7 @@ impl days::Day for Day {
         2
     }
 
-    fn part1(&self, input: &str) -> Option<i64> {
+    fn part1(&self, input: &str) -> Option<String> {
         let reports = input
             .split_terminator("\n")
             .map(|line| {
@@ -68,9 +68,9 @@ impl days::Day for Day {
             })
             .collect::<Vec<Vec<i64>>>();
 
-        Some(reports.iter().filter(|r| check_report(r)).count() as i64)
+        Some(reports.iter().filter(|r| check_report(r)).count() as i64).map(|r| r.to_string())
     }
-    fn part2(&self, input: &str) -> Option<i64> {
+    fn part2(&self, input: &str) -> Option<String> {
         let reports = input
             .split_terminator("\n")
             .map(|line| {
@@ -104,7 +104,7 @@ impl days::Day for Day {
                     return false;
                 })
                 .count() as i64,
-        )
+        ).map(|r| r.to_string())
     }
 }
 
@@ -121,7 +121,7 @@ mod tests {
 1 3 2 4 5
 8 6 4 4 1
 1 3 6 7 9";
-        assert_eq!(DAY.part1(text), Some(2))
+        assert_eq!(DAY.part1(text), Some("2".to_string()))
     }
     #[test]
     fn part2_example1() {
@@ -131,11 +131,11 @@ mod tests {
 1 3 2 4 5
 8 6 4 4 1
 1 3 6 7 9";
-        assert_eq!(DAY.part2(text), Some(4))
+        assert_eq!(DAY.part2(text), Some("4".to_string()))
     }
     #[test]
     fn part2_remove_first() {
         let text = "1 8 9 10 11";
-        assert_eq!(DAY.part2(text), Some(1))
+        assert_eq!(DAY.part2(text), Some("1".to_string()))
     }
 }

@@ -64,7 +64,7 @@ impl days::Day for Day {
         7
     }
 
-    fn part1(&self, input: &str) -> Option<i64> {
+    fn part1(&self, input: &str) -> Option<String> {
         let equations = parse(input);
 
         Some(
@@ -72,10 +72,10 @@ impl days::Day for Day {
                 .iter()
                 .filter(|(total, values)| is_possible(*total, values, &OP.to_vec()))
                 .map(|(total, _)| total)
-                .sum(),
-        )
+                .sum::<i64>(),
+        ).map(|r| r.to_string())
     }
-    fn part2(&self, input: &str) -> Option<i64> {
+    fn part2(&self, input: &str) -> Option<String> {
         let equations = parse(input);
 
         Some(
@@ -83,8 +83,8 @@ impl days::Day for Day {
                 .iter()
                 .filter(|(total, values)| is_possible(*total, values, &OP2.to_vec()))
                 .map(|(total, _)| total)
-                .sum(),
-        )
+                .sum::<i64>(),
+        ).map(|r| r.to_string())
     }
 }
 
@@ -106,7 +106,7 @@ mod tests {
 21037: 9 7 18 13
 292: 11 6 16 20\
 ";
-        assert_eq!(DAY.part1(text), Some(3749))
+        assert_eq!(DAY.part1(text), Some("3749".to_string()))
     }
     #[test]
     fn part2_example1() {
@@ -121,6 +121,6 @@ mod tests {
 21037: 9 7 18 13
 292: 11 6 16 20\
 ";
-        assert_eq!(DAY.part2(text), Some(11387))
+        assert_eq!(DAY.part2(text), Some("11387".to_string()))
     }
 }

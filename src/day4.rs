@@ -9,7 +9,7 @@ impl days::Day for Day {
         4
     }
 
-    fn part1(&self, input: &str) -> Option<i64> {
+    fn part1(&self, input: &str) -> Option<String> {
         let puzzle = {
             let mut puzzle = vec![];
 
@@ -75,9 +75,9 @@ impl days::Day for Day {
             }
         }
 
-        Some(result)
+        Some(result).map(|r| r.to_string())
     }
-    fn part2(&self, input: &str) -> Option<i64> {
+    fn part2(&self, input: &str) -> Option<String> {
         let puzzle = {
             let mut puzzle = vec![];
 
@@ -111,7 +111,7 @@ impl days::Day for Day {
             }
         }
 
-        Some(result)
+        Some(result).map(|r| r.to_string())
     }
 }
 
@@ -132,7 +132,7 @@ SMSMSASXSS
 SAXAMASAAA
 MAMMMXMMMM
 MXMXAXMASX";
-        assert_eq!(DAY.part1(text), Some(18))
+        assert_eq!(DAY.part1(text), Some("18".to_string()))
     }
     #[test]
     fn part2_example1() {
@@ -146,6 +146,6 @@ SMSMSASXSS
 SAXAMASAAA
 MAMMMXMMMM
 MXMXAXMASX";
-        assert_eq!(DAY.part2(text), Some(9))
+        assert_eq!(DAY.part2(text), Some("9".to_string()))
     }
 }

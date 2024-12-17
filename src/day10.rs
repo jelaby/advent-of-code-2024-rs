@@ -91,7 +91,7 @@ impl days::Day for Day {
         10
     }
 
-    fn part1(&self, input: &str) -> Option<i64> {
+    fn part1(&self, input: &str) -> Option<String> {
         let map = parse(input);
 
         let mut scores = vec![vec![None; map[0].len()]; map.len()];
@@ -107,10 +107,10 @@ impl days::Day for Day {
                         })
                         .sum::<i64>()
                 })
-                .sum(),
-        )
+                .sum::<i64>(),
+        ).map(|r| r.to_string())
     }
-    fn part2(&self, input: &str) -> Option<i64> {
+    fn part2(&self, input: &str) -> Option<String> {
         let map = parse(input);
 
         let mut scores = vec![vec![None; map[0].len()]; map.len()];
@@ -123,8 +123,8 @@ impl days::Day for Day {
                         .map(|x| find_trailhead_score(&map, &mut scores, x, y) as i64)
                         .sum::<i64>()
                 })
-                .sum(),
-        )
+                .sum::<i64>(),
+        ).map(|r| r.to_string())
     }
 }
 
@@ -139,7 +139,7 @@ mod tests {
 0123
 7654
 8912";
-        assert_eq!(DAY.part1(text), Some(1))
+        assert_eq!(DAY.part1(text), Some("1".to_string()))
     }
     #[test]
     fn part1_two_heads() {
@@ -147,7 +147,7 @@ mod tests {
 01234
 56765
 09890";
-        assert_eq!(DAY.part1(text), Some(2))
+        assert_eq!(DAY.part1(text), Some("2".to_string()))
     }
     #[test]
     fn part1_example1() {
@@ -160,7 +160,7 @@ mod tests {
 32019012
 01329801
 10456732";
-        assert_eq!(DAY.part1(text), Some(36))
+        assert_eq!(DAY.part1(text), Some("36".to_string()))
     }
     #[test]
     fn part2_example1() {
@@ -173,6 +173,6 @@ mod tests {
 32019012
 01329801
 10456732";
-        assert_eq!(DAY.part2(text), Some(81))
+        assert_eq!(DAY.part2(text), Some("81".to_string()))
     }
 }

@@ -165,14 +165,14 @@ impl days::Day for Day {
         12
     }
 
-    fn part1(&self, input: &str) -> Option<i64> {
+    fn part1(&self, input: &str) -> Option<String> {
         let map = parse(input);
 
-        Some(count_all(&map) as i64)
+        Some(count_all(&map) as i64).map(|r| r.to_string())
     }
-    fn part2(&self, input: &str) -> Option<i64> {
+    fn part2(&self, input: &str) -> Option<String> {
         let map = parse(input);
-        Some(count_all_2(&map) as i64)
+        Some(count_all_2(&map) as i64).map(|r| r.to_string())
     }
 }
 
@@ -188,7 +188,7 @@ AAAA
 BBCD
 BBCC
 EEEC";
-        assert_eq!(DAY.part1(text), Some(140))
+        assert_eq!(DAY.part1(text), Some("140".to_string()))
     }
     #[test]
     fn part1_example2() {
@@ -198,22 +198,22 @@ OXOXO
 OOOOO
 OXOXO
 OOOOO";
-        assert_eq!(DAY.part1(text), Some(772))
+        assert_eq!(DAY.part1(text), Some("772".to_string()))
     }
     #[test]
     fn part1_small() {
         let text = "O";
-        assert_eq!(DAY.part1(text), Some(4))
+        assert_eq!(DAY.part1(text), Some("4".to_string()))
     }
     #[test]
     fn part1_small2() {
         let text = "OO";
-        assert_eq!(DAY.part1(text), Some(12))
+        assert_eq!(DAY.part1(text), Some("12".to_string()))
     }
     #[test]
     fn part1_two() {
         let text = "AB";
-        assert_eq!(DAY.part1(text), Some(8))
+        assert_eq!(DAY.part1(text), Some("8".to_string()))
     }
     #[test]
     fn part2_example1() {
@@ -222,7 +222,7 @@ AAAA
 BBCD
 BBCC
 EEEC";
-        assert_eq!(DAY.part2(text), Some(80))
+        assert_eq!(DAY.part2(text), Some("80".to_string()))
     }
     #[test]
     fn part2_example2() {
@@ -232,7 +232,7 @@ EXXXX
 EEEEE
 EXXXX
 EEEEE";
-        assert_eq!(DAY.part2(text), Some(236))
+        assert_eq!(DAY.part2(text), Some("236".to_string()))
     }
     #[test]
     fn part2_example3() {
@@ -243,7 +243,7 @@ AAABBA
 ABBAAA
 ABBAAA
 AAAAAA";
-        assert_eq!(DAY.part2(text), Some(368))
+        assert_eq!(DAY.part2(text), Some("368".to_string()))
     }
     #[test]
     fn part2_example4() {
@@ -258,21 +258,21 @@ VVIIICJJEE
 MIIIIIJJEE
 MIIISIJEEE
 MMMISSJEEE";
-        assert_eq!(DAY.part2(text), Some(1206))
+        assert_eq!(DAY.part2(text), Some("1206".to_string()))
     }
     #[test]
     fn part2_small() {
         let text = "O";
-        assert_eq!(DAY.part2(text), Some(4))
+        assert_eq!(DAY.part2(text), Some("4".to_string()))
     }
     #[test]
     fn part2_small2() {
         let text = "OO";
-        assert_eq!(DAY.part2(text), Some(8))
+        assert_eq!(DAY.part2(text), Some("8".to_string()))
     }
     #[test]
     fn part2_two() {
         let text = "AB";
-        assert_eq!(DAY.part2(text), Some(8))
+        assert_eq!(DAY.part2(text), Some("8".to_string()))
     }
 }

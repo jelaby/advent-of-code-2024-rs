@@ -95,7 +95,7 @@ impl days::Day for Day {
         13
     }
 
-    fn part1(&self, input: &str) -> Option<i64> {
+    fn part1(&self, input: &str) -> Option<String> {
         let machines = parse(input);
 
         Some(
@@ -103,10 +103,10 @@ impl days::Day for Day {
                 .iter()
                 .filter_map(|m| find_moves(m))
                 .map(|(a, b)| a * 3 + b)
-                .sum(),
-        )
+                .sum::<i64>(),
+        ).map(|r| r.to_string())
     }
-    fn part2(&self, input: &str) -> Option<i64> {
+    fn part2(&self, input: &str) -> Option<String> {
         let machines = parse(input);
 
         Some(
@@ -119,8 +119,8 @@ impl days::Day for Day {
                 })
                 .filter_map(|m| find_moves(&m))
                 .map(|(a, b)| a * 3 + b)
-                .sum(),
-        )
+                .sum::<i64>(),
+        ).map(|r| r.to_string())
     }
 }
 
@@ -147,7 +147,7 @@ Prize: X=7870, Y=6450
 Button A: X+69, Y+23
 Button B: X+27, Y+71
 Prize: X=18641, Y=10279";
-        assert_eq!(DAY.part1(text), Some(480))
+        assert_eq!(DAY.part1(text), Some("480".to_string()))
     }
     #[test]
     fn part2_example1() {
@@ -167,6 +167,6 @@ Prize: X=7870, Y=6450
 Button A: X+69, Y+23
 Button B: X+27, Y+71
 Prize: X=18641, Y=10279";
-        assert_eq!(DAY.part2(text), Some(875318608908))
+        assert_eq!(DAY.part2(text), Some("875318608908".to_string()))
     }
 }

@@ -142,7 +142,7 @@ impl days::Day for Day {
         6
     }
 
-    fn part1(&self, input: &str) -> Option<i64> {
+    fn part1(&self, input: &str) -> Option<String> {
         let (map, p, d) = parse(input);
 
         let result = find_visited(&map, &p, &d);
@@ -151,10 +151,10 @@ impl days::Day for Day {
             result
                 .iter()
                 .map(|row| row.iter().filter(|&r| *r).count() as i64)
-                .sum(),
-        )
+                .sum::<i64>(),
+        ).map(|r| r.to_string())
     }
-    fn part2(&self, input: &str) -> Option<i64> {
+    fn part2(&self, input: &str) -> Option<String> {
         let (mut map, p, d) = parse(input);
 
         let mut result = 0;
@@ -169,7 +169,7 @@ impl days::Day for Day {
             visits[p.y as usize][p.x as usize] |= d;
         }
 
-        Some(result)
+        Some(result).map(|r| r.to_string())
     }
 }
 
@@ -192,7 +192,7 @@ mod tests {
 #.........
 ......#...\
 ";
-        assert_eq!(DAY.part1(text), Some(41))
+        assert_eq!(DAY.part1(text), Some("41".to_string()))
     }
     #[test]
     fn part2_example1() {
@@ -208,6 +208,6 @@ mod tests {
 #.........
 ......#...\
 ";
-        assert_eq!(DAY.part2(text), Some(6))
+        assert_eq!(DAY.part2(text), Some("6".to_string()))
     }
 }

@@ -55,7 +55,7 @@ impl days::Day for Day {
         5
     }
 
-    fn part1(&self, input: &str) -> Option<i64> {
+    fn part1(&self, input: &str) -> Option<String> {
         let (rules, prints) = parse(input);
 
         Some(
@@ -63,10 +63,10 @@ impl days::Day for Day {
                 .iter()
                 .filter(|&print| is_ordered(&rules, print))
                 .map(|print| print[print.len() / 2])
-                .sum(),
-        )
+                .sum::<i64>(),
+        ).map(|r| r.to_string())
     }
-    fn part2(&self, input: &str) -> Option<i64> {
+    fn part2(&self, input: &str) -> Option<String> {
         let (rules, prints) = parse(input);
 
         Some(
@@ -89,8 +89,8 @@ impl days::Day for Day {
                     print
                 })
                 .map(|print| print[print.len() / 2])
-                .sum(),
-        )
+                .sum::<i64>(),
+        ).map(|r| r.to_string())
     }
 }
 
@@ -129,7 +129,7 @@ mod tests {
 75,97,47,61,53
 61,13,29
 97,13,75,29,47";
-        assert_eq!(DAY.part1(text), Some(143))
+        assert_eq!(DAY.part1(text), Some("143".to_string()))
     }
     #[test]
     fn part2_example1() {
@@ -161,6 +161,6 @@ mod tests {
 75,97,47,61,53
 61,13,29
 97,13,75,29,47";
-        assert_eq!(DAY.part2(text), Some(123))
+        assert_eq!(DAY.part2(text), Some("123".to_string()))
     }
 }

@@ -7,7 +7,7 @@ impl days::Day for Day {
         1
     }
 
-    fn part1(&self, input: &str) -> Option<i64> {
+    fn part1(&self, input: &str) -> Option<String> {
         let mut left = vec![];
         let mut right = vec![];
 
@@ -25,9 +25,9 @@ impl days::Day for Day {
             result += (pair.0 - pair.1).abs();
         }
 
-        Some(result)
+        Some(result).map(|r| r.to_string())
     }
-    fn part2(&self, input: &str) -> Option<i64> {
+    fn part2(&self, input: &str) -> Option<String> {
         let mut left = vec![];
         let mut right = vec![];
 
@@ -48,7 +48,7 @@ impl days::Day for Day {
             result += l * (j - i) as i64;
         }
 
-        Some(result)
+        Some(result).map(|r| r.to_string())
     }
 }
 
@@ -65,7 +65,7 @@ mod tests {
 1   3
 3   9
 3   3";
-        assert_eq!(DAY.part1(text), Some(11))
+        assert_eq!(DAY.part1(text), Some("11".to_string()))
     }
     #[test]
     fn part2_example1() {
@@ -75,6 +75,6 @@ mod tests {
 1   3
 3   9
 3   3";
-        assert_eq!(DAY.part2(text), Some(31))
+        assert_eq!(DAY.part2(text), Some("31".to_string()))
     }
 }

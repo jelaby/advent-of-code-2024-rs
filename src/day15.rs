@@ -217,7 +217,7 @@ impl days::Day for Day {
         15
     }
 
-    fn part1(&self, input: &str) -> Option<i64> {
+    fn part1(&self, input: &str) -> Option<String> {
         let (mut map, mut pos, commands) = parse(input, false);
 
         for command in commands {
@@ -228,9 +228,9 @@ impl days::Day for Day {
             }
         }
 
-        Some(score(&map) as i64)
+        Some(score(&map) as i64).map(|r| r.to_string())
     }
-    fn part2(&self, input: &str) -> Option<i64> {
+    fn part2(&self, input: &str) -> Option<String> {
         let (mut map, mut pos, commands) = parse(input, true);
 
         for command in commands {
@@ -241,7 +241,7 @@ impl days::Day for Day {
             }
         }
 
-        Some(score(&map) as i64)
+        Some(score(&map) as i64).map(|r| r.to_string())
     }
 }
 
@@ -274,7 +274,7 @@ vvv<<^>^v^^><<>>><>^<<><^vv^^<>vvv<>><^^v>^>vv<>v<<<<v<^v>^<^^>>>^<v<v
 <><^^>^^^<><vvvvv^v<v<<>^v<v>v<<^><<><<><<<^^<<<^<<>><<><^^^>^^<>^>v<>
 ^^>vv<^v^v<vv>^<><v<^v>^^^>>>^^vvv^>vvv<>>>^<^>>>>>^<<^v>^vvv<>^<><<v>
 v^^>>><<^^<>>^v^<v^vv<>v^<<>^<^v^v><^<<<><<^<v><v<>vv>>v><v^<vv<>v^<<^";
-        assert_eq!(DAY.part1(text), Some(10092))
+        assert_eq!(DAY.part1(text), Some("10092".to_string()))
     }
     #[test]
     fn part1_example2() {
@@ -289,7 +289,7 @@ v^^>>><<^^<>>^v^<v^vv<>v^<<>^<^v^v><^<<<><<^<v><v<>vv>>v><v^<vv<>v^<<^";
 ########
 
 <^^>>>vv<v>>v<<";
-        assert_eq!(DAY.part1(text), Some(2028))
+        assert_eq!(DAY.part1(text), Some("2028".to_string()))
     }
     #[test]
     fn part2_example1() {
@@ -303,7 +303,7 @@ v^^>>><<^^<>>^v^<v^vv<>v^<<>^<^v^v><^<<<><<^<v><v<>vv>>v><v^<vv<>v^<<^";
 #######
 
 <vv<<^^<<^^";
-        assert_eq!(DAY.part2(text), Some(105 + 207 + 306))
+        assert_eq!(DAY.part2(text), Some((105 + 207 + 306).to_string()))
     }
     #[test]
     fn part2_example2() {
@@ -329,6 +329,6 @@ vvv<<^>^v^^><<>>><>^<<><^vv^^<>vvv<>><^^v>^>vv<>v<<<<v<^v>^<^^>>>^<v<v
 <><^^>^^^<><vvvvv^v<v<<>^v<v>v<<^><<><<><<<^^<<<^<<>><<><^^^>^^<>^>v<>
 ^^>vv<^v^v<vv>^<><v<^v>^^^>>>^^vvv^>vvv<>>>^<^>>>>>^<<^v>^vvv<>^<><<v>
 v^^>>><<^^<>>^v^<v^vv<>v^<<>^<^v^v><^<<<><<^<v><v<>vv>>v><v^<vv<>v^<<^";
-        assert_eq!(DAY.part2(text), Some(9021))
+        assert_eq!(DAY.part2(text), Some("9021".to_string()))
     }
 }

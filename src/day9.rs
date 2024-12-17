@@ -91,7 +91,7 @@ impl days::Day for Day {
         9
     }
 
-    fn part1(&self, input: &str) -> Option<i64> {
+    fn part1(&self, input: &str) -> Option<String> {
         let mut map = parse(input);
 
         let mut i = map.len() - 1;
@@ -114,10 +114,11 @@ impl days::Day for Day {
             map.iter()
                 .enumerate()
                 .map(|(i, id)| i as i64 * (max(*id as i64, 0)))
-                .sum(),
+                .sum::<i64>(),
         )
+        .map(|r| r.to_string())
     }
-    fn part2(&self, input: &str) -> Option<i64> {
+    fn part2(&self, input: &str) -> Option<String> {
         let mut map = parse(input);
 
         defrag(&mut map);
@@ -126,8 +127,8 @@ impl days::Day for Day {
             map.iter()
                 .enumerate()
                 .map(|(i, id)| i as i64 * (max(*id as i64, 0)))
-                .sum(),
-        )
+                .sum::<i64>()
+        ).map(|r| r.to_string())
     }
 }
 
@@ -139,12 +140,12 @@ mod tests {
     #[test]
     fn part1_example1() {
         let text = "2333133121414131402";
-        assert_eq!(DAY.part1(text), Some(1928))
+        assert_eq!(DAY.part1(text), Some("1928".to_string()))
     }
     #[test]
     fn part2_example1() {
         let text = "2333133121414131402";
-        assert_eq!(DAY.part2(text), Some(2858))
+        assert_eq!(DAY.part2(text), Some("2858".to_string()))
     }
 
     #[test]

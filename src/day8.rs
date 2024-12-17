@@ -11,7 +11,7 @@ impl days::Day for Day {
         8
     }
 
-    fn part1(&self, input: &str) -> Option<i64> {
+    fn part1(&self, input: &str) -> Option<String> {
         let freq_antennae = input.split_terminator('\n').enumerate()
             .flat_map(|(y, line)| line.chars().enumerate()
                 .filter(|(_, c)| *c != '.')
@@ -44,9 +44,9 @@ impl days::Day for Day {
             }
         }
 
-        Some(antinodes.len() as i64)
+        Some(antinodes.len() as i64).map(|r| r.to_string())
     }
-    fn part2(&self, input: &str) -> Option<i64> {
+    fn part2(&self, input: &str) -> Option<String> {
         let freq_antennae = input.split_terminator('\n').enumerate()
             .flat_map(|(y, line)| line.chars().enumerate()
                 .filter(|(_, c)| *c != '.')
@@ -85,7 +85,7 @@ impl days::Day for Day {
             }
         }
 
-        Some(antinodes.len() as i64)
+        Some(antinodes.len() as i64).map(|r| r.to_string())
     }
 }
 
@@ -110,7 +110,7 @@ mod tests {
 ............
 ............
 ";
-        assert_eq!(DAY.part1(text), Some(0))
+        assert_eq!(DAY.part1(text), Some("0".to_string()))
     }
     #[test]
     fn part1_one_node() {
@@ -128,7 +128,7 @@ mod tests {
 ............
 ............
 ";
-        assert_eq!(DAY.part1(text), Some(0))
+        assert_eq!(DAY.part1(text), Some("0".to_string()))
     }
     #[test]
     fn part1_two_nodes() {
@@ -146,7 +146,7 @@ mod tests {
 ............
 ............
 ";
-        assert_eq!(DAY.part1(text), Some(2))
+        assert_eq!(DAY.part1(text), Some("2".to_string()))
     }
     #[test]
     fn part1_example1() {
@@ -164,7 +164,7 @@ mod tests {
 ............
 ............
 ";
-        assert_eq!(DAY.part1(text), Some(14))
+        assert_eq!(DAY.part1(text), Some("14".to_string()))
     }
     #[test]
     fn part2_example1() {
@@ -179,7 +179,7 @@ T.........
 ..........
 ..........
 ..........";
-        assert_eq!(DAY.part2(text), Some(9))
+        assert_eq!(DAY.part2(text), Some("9".to_string()))
     }
     #[test]
     fn part2_example2() {
@@ -197,6 +197,6 @@ T.........
 ............
 ............
 ";
-        assert_eq!(DAY.part2(text), Some(34))
+        assert_eq!(DAY.part2(text), Some("34".to_string()))
     }
 }

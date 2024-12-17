@@ -157,11 +157,11 @@ impl days::Day for Day {
         16
     }
 
-    fn part1(&self, input: &str) -> Option<i64> {
+    fn part1(&self, input: &str) -> Option<String> {
         let (map, start, end) = parse(input);
-        Some(find_shortest_route(&map, start, end))
+        Some(find_shortest_route(&map, start, end)).map(|r| r.to_string())
     }
-    fn part2(&self, input: &str) -> Option<i64> {
+    fn part2(&self, input: &str) -> Option<String> {
         let (map, start, end) = parse(input);
 
         let max_cost = find_shortest_route(&map, start, end);
@@ -175,8 +175,8 @@ impl days::Day for Day {
             visited
                 .iter()
                 .map(|row| row.iter().filter(|x| **x).count() as i64)
-                .sum(),
-        )
+                .sum::<i64>(),
+        ).map(|r| r.to_string())
     }
 }
 
@@ -203,7 +203,7 @@ mod tests {
 #.###.#.#.#.#.#
 #S..#.....#...#
 ###############";
-        assert_eq!(DAY.part1(text), Some(7036))
+        assert_eq!(DAY.part1(text), Some("7036".to_string()))
     }
     #[test]
     fn part1_example2() {
@@ -225,7 +225,7 @@ mod tests {
 #.#.#.#########.#
 #S#.............#
 #################";
-        assert_eq!(DAY.part1(text), Some(11048))
+        assert_eq!(DAY.part1(text), Some("11048".to_string()))
     }
     #[test]
     fn part2_example1() {
@@ -245,7 +245,7 @@ mod tests {
 #.###.#.#.#.#.#
 #S..#.....#...#
 ###############";
-        assert_eq!(DAY.part2(text), Some(45))
+        assert_eq!(DAY.part2(text), Some("45".to_string()))
     }
     #[test]
     fn part2_example2() {
@@ -267,7 +267,7 @@ mod tests {
 #.#.#.#########.#
 #S#.............#
 #################";
-        assert_eq!(DAY.part2(text), Some(64))
+        assert_eq!(DAY.part2(text), Some("64".to_string()))
     }
     #[test]
     fn part2_small() {
@@ -276,7 +276,7 @@ mod tests {
 #.E#
 #S.#
 ####";
-        assert_eq!(DAY.part2(text), Some(3))
+        assert_eq!(DAY.part2(text), Some("3".to_string()))
     }
     #[test]
     fn part2_small2() {
@@ -285,6 +285,6 @@ mod tests {
 #..E#
 #S.##
 #####";
-        assert_eq!(DAY.part2(text), Some(5))
+        assert_eq!(DAY.part2(text), Some("5".to_string()))
     }
 }

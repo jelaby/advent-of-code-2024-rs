@@ -10,7 +10,7 @@ impl days::Day for Day {
         3
     }
 
-    fn part1(&self, input: &str) -> Option<i64> {
+    fn part1(&self, input: &str) -> Option<String> {
         let mul_pattern = Regex::new(r"mul\((\d+),(\d+)\)").unwrap();
 
         Some(
@@ -20,10 +20,10 @@ impl days::Day for Day {
                 .map(|(_, [left, right])| {
                     left.parse::<i64>().unwrap() * right.parse::<i64>().unwrap()
                 })
-                .sum(),
-        )
+                .sum::<i64>(),
+        ).map(|r| r.to_string())
     }
-    fn part2(&self, input: &str) -> Option<i64> {
+    fn part2(&self, input: &str) -> Option<String> {
         let mul_pattern =
             Regex::new(r"(?<op2>mul)\((?<p1>\d+),(?<p2>\d+)\)|(?<op0>do|don't)\(\)").unwrap();
 
@@ -55,7 +55,7 @@ impl days::Day for Day {
                 }
             }
         }
-        Some(sum)
+        Some(sum).map(|r| r.to_string())
     }
 }
 
@@ -67,11 +67,11 @@ mod tests {
     #[test]
     fn part1_example1() {
         let text = "xmul(2,4)%&mul[3,7]!@^do_not_mul(5,5)+mul(32,64]then(mul(11,8)mul(8,5))";
-        assert_eq!(DAY.part1(text), Some(161))
+        assert_eq!(DAY.part1(text), Some("161".to_string()))
     }
     #[test]
     fn part2_example1() {
         let text = "xmul(2,4)&mul[3,7]!^don't()_mul(5,5)+mul(32,64](mul(11,8)undo()?mul(8,5))";
-        assert_eq!(DAY.part2(text), Some(48))
+        assert_eq!(DAY.part2(text), Some("48".to_string()))
     }
 }

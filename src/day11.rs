@@ -66,13 +66,13 @@ impl days::Day for Day {
         11
     }
 
-    fn part1(&self, input: &str) -> Option<i64> {
+    fn part1(&self, input: &str) -> Option<String> {
         let stones = parse(input);
-        Some(iterate_n(&stones, 25) as i64)
+        Some(iterate_n(&stones, 25) as i64).map(|r| r.to_string())
     }
-    fn part2(&self, input: &str) -> Option<i64> {
+    fn part2(&self, input: &str) -> Option<String> {
         let stones = parse(input);
-        Some(iterate_n(&stones, 75) as i64)
+        Some(iterate_n(&stones, 75) as i64).map(|r| r.to_string())
     }
 }
 
@@ -84,7 +84,7 @@ mod tests {
     #[test]
     fn part1_example1() {
         let text = "125 17";
-        assert_eq!(DAY.part1(text), Some(55312))
+        assert_eq!(DAY.part1(text), Some("55312".to_string()))
     }
     #[test]
     fn part1_example1_breakdown2() {
@@ -100,6 +100,6 @@ mod tests {
     #[test]
     fn part2_example1() {
         let text = "125 17";
-        assert_eq!(DAY.part2(text), Some(65601038650482))
+        assert_eq!(DAY.part2(text), Some("65601038650482".to_string()))
     }
 }

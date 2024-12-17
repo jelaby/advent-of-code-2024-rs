@@ -12,10 +12,10 @@ pub enum AoCError {
 
 pub trait Day {
     fn day(&self) -> u32;
-    fn part1(&self, _lines: &str) -> Option<i64> {
+    fn part1(&self, _lines: &str) -> Option<String> {
         None
     }
-    fn part2(&self, _lines: &str) -> Option<i64> {
+    fn part2(&self, _lines: &str) -> Option<String> {
         None
     }
 }

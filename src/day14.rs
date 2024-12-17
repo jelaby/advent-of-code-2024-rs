@@ -150,11 +150,11 @@ impl days::Day for Day {
         14
     }
 
-    fn part1(&self, input: &str) -> Option<i64> {
-        do_part1(input, 101, 103)
+    fn part1(&self, input: &str) -> Option<String> {
+        do_part1(input, 101, 103).map(|r| r.to_string())
     }
-    fn part2(&self, input: &str) -> Option<i64> {
-        do_part2(input, 101, 103)
+    fn part2(&self, input: &str) -> Option<String> {
+        do_part2(input, 101, 103).map(|r| r.to_string())
     }
 }
 
