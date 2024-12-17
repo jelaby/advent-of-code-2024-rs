@@ -168,8 +168,6 @@ impl days::Day for Day {
 
         let mut visited = routes_to_goal(&map, max_cost as i32, start, (1, 0), end);
 
-        show_routes(&map, &visited);
-
         visited[start.1 as usize][start.0 as usize] = true;
         visited[end.1 as usize][end.0 as usize] = true;
 
