@@ -1,3 +1,4 @@
+use std::cmp::Reverse;
 use crate::days;
 use itertools::Itertools;
 use num::pow;
@@ -7,16 +8,17 @@ pub struct Day;
 
 impl Day {}
 
+#[derive(Debug, Eq, PartialEq)]
 struct Machine {
-    a: i32,
-    b: i32,
-    c: i32,
-    i: i32,
-    output: Vec<i32>,
+    a: i64,
+    b: i64,
+    c: i64,
+    i: i64,
+    output: Vec<i64>,
 }
 
 impl Machine {
-    fn combo(&self, operand: i32) -> i32 {
+    fn combo(&self, operand: i64) -> i64 {
         if operand <= 3 {
             operand
         } else if operand == 4 {
@@ -32,7 +34,7 @@ impl Machine {
 }
 
 impl Machine {
-    fn new(a: i32, b: i32, c: i32) -> Machine {
+    fn new(a: i64, b: i64, c: i64) -> Machine {
         Machine {
             a,
             b,
@@ -43,6 +45,7 @@ impl Machine {
     }
 }
 
+#[derive(Debug, Eq, PartialEq)]
 enum OpCode {
     ADV,
     BXL,
@@ -55,7 +58,7 @@ enum OpCode {
 }
 
 impl OpCode {
-    fn execute(&self, machine: &mut Machine, operand: i32) {
+    fn execute(&self, machine: &mut Machine, operand: i64) {
         match self {
             OpCode::ADV => machine.a = machine.a / pow(2, machine.combo(operand) as usize),
             OpCode::BXL => machine.b = machine.b ^ operand,
@@ -73,7 +76,7 @@ impl OpCode {
     }
 }
 
-fn opcode_for(n: i32) -> OpCode {
+fn opcode_for(n: i64) -> OpCode {
     match n {
         0 => OpCode::ADV,
         1 => OpCode::BXL,
@@ -87,7 +90,7 @@ fn opcode_for(n: i32) -> OpCode {
     }
 }
 
-fn parse_register(input: &str) -> i32 {
+fn parse_register(input: &str) -> i64 {
     Regex::new(r"Register \w: (\d+)")
         .ok()
         .and_then(|r| r.captures(input))
@@ -96,7 +99,7 @@ fn parse_register(input: &str) -> i32 {
         .unwrap()
 }
 
-fn parse_program(input: &str) -> Vec<i32> {
+fn parse_program(input: &str) -> Vec<i64> {
     Regex::new(r"Program: (.*)")
         .ok()
         .and_then(|r| r.captures(input))
@@ -104,13 +107,13 @@ fn parse_program(input: &str) -> Vec<i32> {
         .map(|v| {
             v.as_str()
                 .split(",")
-                .map(|o| o.parse::<i32>().expect(&format!("Failed to parse {o}")))
+                .map(|o| o.parse::<i64>().expect(&format!("Failed to parse {o}")))
                 .collect()
         })
         .unwrap()
 }
 
-fn parse(input: &str) -> (i32, i32, i32, Vec<i32>) {
+fn parse(input: &str) -> (i64, i64, i64, Vec<i64>) {
     let mut lines = input.lines();
 
     let a = parse_register(lines.next().unwrap());
@@ -124,12 +127,47 @@ fn parse(input: &str) -> (i32, i32, i32, Vec<i32>) {
     (a, b, c, program)
 }
 
-fn run(machine: &mut Machine, input: Vec<i32>) {
-    while machine.i < input.len() as i32 {
+fn run(machine: &mut Machine, input: &Vec<i64>) {
+    //println!("{machine:?} {:?} {:?}", opcode_for(input[machine.i as usize]), input[machine.i as usize + 1]);
+    while machine.i < input.len() as i64 {
         opcode_for(input[machine.i as usize]).execute(machine, input[(machine.i + 1) as usize]);
+        //println!("{machine:?} {:?} {:?}", input.get(machine.i as usize).map(|c| opcode_for(*c)), input.get(machine.i as usize + 1));
 
         machine.i += 2;
     }
+}
+
+fn solve_part_2(input: &Vec<i64>, expected: &Vec<i64>) -> Option<i64> {
+
+    let mut queue = vec![];
+    for i in (0..=0x7).rev() {
+        queue.push(i)
+    }
+
+    while !queue.is_empty() {
+
+        let a = queue.pop().unwrap();
+
+        let mut machine = Machine::new(a, 0, 0);
+
+        run(&mut machine, input);
+
+        if machine.output.len() > 0 && machine.output.len() <= expected.len()
+            && machine.output[..] == expected[expected.len() - machine.output.len()..]
+        {
+            if machine.output.len() == expected.len() {
+                return Some(a);
+            } else {
+                for i in (0..=0x7).rev() {
+                    if a > 0 || i > 0 {
+                        queue.push(a << 3 | i);
+                    }
+                }
+            }
+        }
+    }
+
+    return None;
 }
 
 impl days::Day for Day {
@@ -148,12 +186,14 @@ impl days::Day for Day {
             output: vec![],
         };
 
-        run(&mut machine, program);
+        run(&mut machine, &program);
 
         Some(machine.output.iter().map(|n| n.to_string()).join(","))
     }
     fn part2(&self, input: &str) -> Option<String> {
-        None
+        let (_, b, c, mut program) = parse(input);
+
+        solve_part_2(&program, &program).map(|r| r.to_string())
     }
 }
 
@@ -181,7 +221,12 @@ Program: 0,1,5,4,3,0";
     }
     #[test]
     fn part2_example1() {
-        let text = "";
-        assert_eq!(DAY.part2(text), Some("".to_string()))
+        let text = "\
+Register A: 2024
+Register B: 0
+Register C: 0
+
+Program: 0,3,5,4,3,0";
+        assert_eq!(DAY.part2(text), Some("117440".to_string()))
     }
 }
