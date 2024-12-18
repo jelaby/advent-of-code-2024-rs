@@ -1,4 +1,3 @@
-use std::cmp::Reverse;
 use crate::days;
 use itertools::Itertools;
 use num::pow;
@@ -128,10 +127,8 @@ fn parse(input: &str) -> (i64, i64, i64, Vec<i64>) {
 }
 
 fn run(machine: &mut Machine, input: &Vec<i64>) {
-    //println!("{machine:?} {:?} {:?}", opcode_for(input[machine.i as usize]), input[machine.i as usize + 1]);
     while machine.i < input.len() as i64 {
         opcode_for(input[machine.i as usize]).execute(machine, input[(machine.i + 1) as usize]);
-        //println!("{machine:?} {:?} {:?}", input.get(machine.i as usize).map(|c| opcode_for(*c)), input.get(machine.i as usize + 1));
 
         machine.i += 2;
     }
@@ -176,7 +173,7 @@ impl days::Day for Day {
     }
 
     fn part1(&self, input: &str) -> Option<String> {
-        let (a, b, c, mut program) = parse(input);
+        let (a, b, c, program) = parse(input);
 
         let mut machine = Machine {
             a,
@@ -191,7 +188,7 @@ impl days::Day for Day {
         Some(machine.output.iter().map(|n| n.to_string()).join(","))
     }
     fn part2(&self, input: &str) -> Option<String> {
-        let (_, b, c, mut program) = parse(input);
+        let (_, _, _, program) = parse(input);
 
         solve_part_2(&program, &program).map(|r| r.to_string())
     }
