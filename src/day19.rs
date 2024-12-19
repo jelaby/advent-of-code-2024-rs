@@ -8,7 +8,7 @@ pub struct Day;
 
 impl Day {}
 
-fn parse<'a>(input: &'a str) -> (Vec<&'a str>, Vec<&'a str>) {
+fn parse(input: &str) -> (Vec<&str>, Vec<&str>) {
     let mut lines = input.lines();
 
     let towels: Vec<&str> = lines.next().unwrap().split(", ").collect();
