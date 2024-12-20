@@ -90,16 +90,11 @@ fn find_cheats(
                 let ny = y + dy;
                 let nnx = nx + dx;
                 let nny = ny + dy;
-                let nnnx = nnx + dx;
-                let nnny = nny + dy;
 
                 if get(map, nx, ny, true) {
                     if !get(map, nnx, nny, true) {
                         let cost_from_here = get(cost_to_end, nnx, nny, WALL_COST);
                         result.push(((x, y), (dx, dy), cost_to_here + 2 + cost_from_here));
-                    } else if !get(map, nnnx, nnny, true) {
-                        let cost_from_here = get(cost_to_end, nnnx, nnny, WALL_COST);
-                        result.push(((x, y), (dx * 2, dy * 2), cost_to_here + 3 + cost_from_here));
                     }
                 }
             }
