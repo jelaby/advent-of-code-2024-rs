@@ -75,28 +75,69 @@ fn get<T: Copy>(map: &Vec<Vec<T>>, x: i64, y: i64, default: T) -> T {
 
 const DIRS: [(i64, i64); 4] = [(0, 1), (1, 0), (0, -1), (-1, 0)];
 
-fn find_cheats(
+fn find_modern_cheats_from<F>(
     map: &Vec<Vec<bool>>,
     cost_from_start: &Vec<Vec<i64>>,
     cost_to_end: &Vec<Vec<i64>>,
-) -> Vec<((i64, i64), (i64, i64), i64)> {
+    x: i64,
+    y: i64,
+    max_cheat: i64,
+    callback: &mut F,
+) where
+    F: FnMut(i64),
+{
+    let mut queue = VecDeque::new();
+    let mut visited = vec![vec![false; map[0].len()]; map.len()];
+
+    let cost_to_here = cost_from_start[y as usize][x as usize];
+
+    visited[y as usize][x as usize] = true;
+    for (dx, dy) in DIRS {
+        let (nx, ny) = (x + dx, y + dy);
+        if get(map, nx, ny, true) {
+            queue.push_back(((nx, ny), 1));
+            visited[ny as usize][nx as usize] = true;
+        }
+    }
+
+    while let Some(((x,y), cheat_time)) = queue.pop_front() {
+        if cheat_time < max_cheat {
+            for (dx, dy) in DIRS {
+                let (nx, ny) = (x + dx, y + dy);
+                if !get(&visited, nx, ny, true) {
+                    visited[ny as usize][nx as usize] = true;
+                    queue.push_back(((nx, ny), cheat_time + 1));
+                }
+            }
+        }
+        if !get(map, x, y, true) {
+            let cost_from_here = cost_to_end[y as usize][x as usize];
+            let cheat_cost = cost_to_here + cheat_time + cost_from_here;
+            callback(cheat_cost);
+        }
+    }
+}
+
+fn find_modern_cheats(
+    map: &Vec<Vec<bool>>,
+    cost_from_start: &Vec<Vec<i64>>,
+    cost_to_end: &Vec<Vec<i64>>,
+    max_cheat: i64,
+) -> Vec<i64> {
     let mut result = vec![];
 
     for y in 1..(map.len() as i64 - 1) {
         for x in 1..(map[y as usize].len() as i64 - 1) {
-            let cost_to_here = cost_from_start[y as usize][x as usize];
-            for &(dy, dx) in &DIRS {
-                let nx = x + dx;
-                let ny = y + dy;
-                let nnx = nx + dx;
-                let nny = ny + dy;
-
-                if get(map, nx, ny, true) {
-                    if !get(map, nnx, nny, true) {
-                        let cost_from_here = get(cost_to_end, nnx, nny, WALL_COST);
-                        result.push(((x, y), (dx, dy), cost_to_here + 2 + cost_from_here));
-                    }
-                }
+            if !get(map, x, y, true) {
+                find_modern_cheats_from(
+                    map,
+                    cost_from_start,
+                    cost_to_end,
+                    x,
+                    y,
+                    max_cheat,
+                    &mut |cheat_time| result.push(cheat_time),
+                );
             }
         }
     }
@@ -109,6 +150,7 @@ fn count_cheats(
     start: (usize, usize),
     end: (usize, usize),
     saving: i64,
+    max_cheat: i64,
 ) -> usize {
     let costs_from_start = calculate_costs(map, start);
     let costs_to_end = calculate_costs(map, end);
@@ -116,11 +158,11 @@ fn count_cheats(
     let normal_cost = costs_from_start[end.1][end.0];
     assert_eq!(normal_cost, costs_to_end[start.1][start.0]);
 
-    let cheats = find_cheats(map, &costs_from_start, &costs_to_end);
+    let cheats = find_modern_cheats(map, &costs_from_start, &costs_to_end, max_cheat);
 
     cheats
         .iter()
-        .map(|(_, _, cost)| cost)
+        .map(|cost| cost)
         .map(|&cost| normal_cost - cost)
         .filter(|&cheat_saving| cheat_saving >= saving)
         .count()
@@ -133,21 +175,21 @@ impl days::Day for Day {
 
     fn part1(&self, input: &str) -> Option<String> {
         let (map, start, end) = parse(input);
-        Some(count_cheats(&map, start, end, 100)).map(|r| r.to_string())
+        Some(count_cheats(&map, start, end, 100, 2)).map(|r| r.to_string())
     }
     fn part2(&self, input: &str) -> Option<String> {
-        None
+        let (map, start, end) = parse(input);
+        Some(count_cheats(&map, start, end, 100, 20)).map(|r| r.to_string())
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use super::*;
     use crate::days::Day;
 
     const DAY: super::Day = super::Day;
-    #[test]
-    fn part1_example1_full() {
-        let text = "\
+    const TEXT: &str = "\
 ###############
 #...#...#.....#
 #.#.#.#.#.###.#
@@ -163,32 +205,18 @@ mod tests {
 #.#.#.#.#.#.###
 #...#...#...###
 ###############";
-        assert_eq!(DAY.part1(text), Some(0.to_string()))
+    #[test]
+    fn part1_example1_full() {
+        assert_eq!(DAY.part1(TEXT), Some(0.to_string()))
     }
     #[test]
     fn part1_example1() {
-        let text = "\
-###############
-#...#...#.....#
-#.#.#.#.#.###.#
-#S#...#.#.#...#
-#######.#.#.###
-#######.#.#...#
-#######.#.###.#
-###..E#...#...#
-###.#######.###
-#...###...#...#
-#.#####.#.###.#
-#.#...#.#.#...#
-#.#.#.#.#.#.###
-#...#...#...###
-###############";
-        let (map, start, end) = super::parse(text);
-        assert_eq!(super::count_cheats(&map, start, end, 64), 1);
-        assert_eq!(super::count_cheats(&map, start, end, 60), 1);
-        assert_eq!(super::count_cheats(&map, start, end, 41), 1);
-        assert_eq!(super::count_cheats(&map, start, end, 40), 2);
-        assert_eq!(super::count_cheats(&map, start, end, 10), 10);
+        let (map, start, end) = parse(TEXT);
+        assert_eq!(count_cheats(&map, start, end, 64, 2), 1);
+        assert_eq!(count_cheats(&map, start, end, 60, 2), 1);
+        assert_eq!(count_cheats(&map, start, end, 41, 2), 1);
+        assert_eq!(count_cheats(&map, start, end, 40, 2), 2);
+        assert_eq!(count_cheats(&map, start, end, 10, 2), 10);
     }
     #[test]
     fn part1_smallest() {
@@ -196,12 +224,51 @@ mod tests {
 #####
 #S#E#
 #####";
-        let (map, start, end) = super::parse(text);
-        assert_eq!(super::count_cheats(&map, start, end, 100), 1);
+        let (map, start, end) = parse(text);
+        assert_eq!(count_cheats(&map, start, end, 100, 2), 1);
     }
     #[test]
-    fn part2_example1() {
-        let text = "";
-        assert_eq!(DAY.part2(text), Some("4".to_string()))
+    fn part2_example77() {
+        let (map, start, end) = parse(TEXT);
+        assert_eq!(count_cheats(&map, start, end, 77, 20), 0);
+    }
+    #[test]
+    fn part2_example76() {
+        let (map, start, end) = parse(TEXT);
+        assert_eq!(count_cheats(&map, start, end, 76, 20), 3);
+    }
+    #[test]
+    fn part2_example74() {
+        let (map, start, end) = parse(TEXT);
+        assert_eq!(count_cheats(&map, start, end, 74, 20), 3 + 4);
+    }
+    #[test]
+    fn part2_example72() {
+        let (map, start, end) = parse(TEXT);
+        assert_eq!(count_cheats(&map, start, end, 72, 20), 3 + 4 + 22);
+    }
+    #[test]
+    fn part2_example70() {
+        let (map, start, end) = parse(TEXT);
+        assert_eq!(count_cheats(&map, start, end, 70, 20), 3 + 4 + 22 + 12);
+    }
+    #[test]
+    fn part2_example68() {
+        let (map, start, end) = parse(TEXT);
+        assert_eq!(count_cheats(&map, start, end, 68, 20), 3 + 4 + 22 + 12 + 14);
+    }
+    #[test]
+    fn part2_jump_20() {
+        let (map, start, end) = parse("\
+##########################################
+#S       #                              E#
+#        ##                              #
+#        ###                             #
+#                                        #
+##########################################
+");
+        assert_eq!(count_cheats(&map, start, end, 1, 2), 1);
+        assert_eq!(count_cheats(&map, start, end, 1, 3), 4);
+        assert_eq!(count_cheats(&map, start, end, 1, 4), 6);
     }
 }
