@@ -1,4 +1,5 @@
 use crate::days;
+use num::abs;
 use std::collections::VecDeque;
 
 pub struct Day;
@@ -86,34 +87,19 @@ fn find_modern_cheats_from<F>(
 ) where
     F: FnMut(i64),
 {
-    let mut queue = VecDeque::new();
-    let mut visited = vec![vec![false; map[0].len()]; map.len()];
-
     let cost_to_here = cost_from_start[y as usize][x as usize];
 
-    visited[y as usize][x as usize] = true;
-    for (dx, dy) in DIRS {
-        let (nx, ny) = (x + dx, y + dy);
-        if get(map, nx, ny, true) {
-            queue.push_back(((nx, ny), 1));
-            visited[ny as usize][nx as usize] = true;
-        }
-    }
-
-    while let Some(((x,y), cheat_time)) = queue.pop_front() {
-        if cheat_time < max_cheat {
-            for (dx, dy) in DIRS {
+    for dy in -max_cheat..=max_cheat {
+        let max_dx = max_cheat - abs(dy);
+        for dx in -max_dx..=max_dx {
+            if dx != 0 || dy != 0 {
                 let (nx, ny) = (x + dx, y + dy);
-                if !get(&visited, nx, ny, true) {
-                    visited[ny as usize][nx as usize] = true;
-                    queue.push_back(((nx, ny), cheat_time + 1));
+                if !get(map, nx, ny, true) {
+                    let cost_from_here = cost_to_end[ny as usize][nx as usize];
+                    let cheat_time = abs(dx) + abs(dy);
+                    callback(cost_to_here + cheat_time + cost_from_here);
                 }
             }
-        }
-        if !get(map, x, y, true) {
-            let cost_from_here = cost_to_end[y as usize][x as usize];
-            let cheat_cost = cost_to_here + cheat_time + cost_from_here;
-            callback(cheat_cost);
         }
     }
 }
@@ -259,14 +245,16 @@ mod tests {
     }
     #[test]
     fn part2_jump_20() {
-        let (map, start, end) = parse("\
-##########################################
-#S       #                              E#
-#        ##                              #
-#        ###                             #
-#                                        #
-##########################################
-");
+        let (map, start, end) = parse(
+            "\
+########
+#S #  E#
+## ##  #
+## ### #
+##     #
+########
+",
+        );
         assert_eq!(count_cheats(&map, start, end, 1, 2), 1);
         assert_eq!(count_cheats(&map, start, end, 1, 3), 4);
         assert_eq!(count_cheats(&map, start, end, 1, 4), 6);
