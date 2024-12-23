@@ -1,7 +1,6 @@
 use crate::days;
 use nalgebra::Vector2;
 use num::abs;
-use std::cell::Cell;
 use std::cmp::min;
 use std::collections::HashMap;
 use std::sync::{LazyLock, Mutex};
@@ -45,10 +44,7 @@ where
 
     let mut results = Vec::with_capacity(2);
 
-    fn single_axis_move_to<F>(start: Vec2, end: Vec2, next_moves_for_keypresses: &F) -> String
-    where
-        F: Fn(&str) -> i64,
-    {
+    fn single_axis_move_to(start: Vec2, end: Vec2) -> String {
         let move_required = if start.x < end.x {
             ">"
         } else if start.x > end.x {
@@ -70,8 +66,8 @@ where
     if keypad[corner.y as usize][corner.x as usize] != ' ' {
         results.push(next_moves_for_keypresses(&format!(
             "{}{}A",
-            single_axis_move_to(start, corner, next_moves_for_keypresses),
-            single_axis_move_to(corner, end, next_moves_for_keypresses)
+            single_axis_move_to(start, corner),
+            single_axis_move_to(corner, end)
         )));
     }
     // left/right first
@@ -79,18 +75,19 @@ where
     if keypad[corner.y as usize][corner.x as usize] != ' ' {
         results.push(next_moves_for_keypresses(&format!(
             "{}{}A",
-            single_axis_move_to(start, corner, next_moves_for_keypresses),
-            single_axis_move_to(corner, end, next_moves_for_keypresses)
+            single_axis_move_to(start, corner),
+            single_axis_move_to(corner, end)
         )));
     }
 
     *results.iter().min().unwrap()
 }
 
-static CACHE: LazyLock<Mutex<HashMap<(i64, String), i64>>> = LazyLock::new(|| Mutex::new(HashMap::new()));
+static CACHE: LazyLock<Mutex<HashMap<(i64, String), i64>>> =
+    LazyLock::new(|| Mutex::new(HashMap::new()));
 fn cached_moves_for_keypresses(id: i64, sequence: &str) -> Option<i64> {
     let cache = CACHE.lock().unwrap();
-    cache.get(&(id,sequence.to_string())).map(|r| *r)
+    cache.get(&(id, sequence.to_string())).map(|r| *r)
 }
 
 fn moves_for_keypresses<F, const W: usize, const H: usize>(
@@ -114,7 +111,10 @@ where
                 prev_pos = c;
             }
 
-            CACHE.lock().unwrap().insert((id, sequence.to_string()), result);
+            CACHE
+                .lock()
+                .unwrap()
+                .insert((id, sequence.to_string()), result);
 
             result
         }
@@ -131,9 +131,9 @@ impl days::Day for Day {
             input
                 .lines()
                 .map(|line| {
-                    let keypresses = moves_for_keypresses(1, &NUMERIC, line, &|sequence| {
-                        moves_for_keypresses(2, &ARROWS, sequence, &|sequence| {
-                            moves_for_keypresses(3, &ARROWS, sequence, &|sequence: &str| {
+                    let keypresses = moves_for_keypresses(101, &NUMERIC, line, &|sequence| {
+                        moves_for_keypresses(102, &ARROWS, sequence, &|sequence| {
+                            moves_for_keypresses(103, &ARROWS, sequence, &|sequence: &str| {
                                 sequence.len() as i64
                             })
                         })
@@ -223,7 +223,7 @@ mod tests {
 
     const DAY: super::Day = super::Day;
     #[test]
-    fn moves_for_keypress_A() {
+    fn moves_for_keypress_a() {
         assert_eq!(
             moves_for_keypress(&ARROWS, 'A', 'A', &|s: &str| s.len() as i64),
             1
@@ -305,6 +305,6 @@ mod tests {
 179A
 456A
 379A";
-        assert_eq!(DAY.part2(text), Some("".to_string()))
+        assert_eq!(DAY.part2(text), Some("154115708116294".to_string()))
     }
 }
