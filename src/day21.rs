@@ -1,7 +1,10 @@
 use crate::days;
 use nalgebra::Vector2;
 use num::abs;
+use std::cell::Cell;
 use std::cmp::min;
+use std::collections::HashMap;
+use std::sync::{LazyLock, Mutex};
 
 pub struct Day;
 
@@ -65,22 +68,33 @@ where
     // up/down first
     let corner = Vec2::new(start.x, end.y);
     if keypad[corner.y as usize][corner.x as usize] != ' ' {
-        results.push(next_moves_for_keypresses(&format!("{}{}A",
-                                                        single_axis_move_to(start, corner, next_moves_for_keypresses),
-                                                        single_axis_move_to(corner, end, next_moves_for_keypresses))));
+        results.push(next_moves_for_keypresses(&format!(
+            "{}{}A",
+            single_axis_move_to(start, corner, next_moves_for_keypresses),
+            single_axis_move_to(corner, end, next_moves_for_keypresses)
+        )));
     }
     // left/right first
     let corner = Vec2::new(end.x, start.y);
     if keypad[corner.y as usize][corner.x as usize] != ' ' {
-        results.push(next_moves_for_keypresses(&format!("{}{}A",
-                                                        single_axis_move_to(start, corner, next_moves_for_keypresses),
-                                                        single_axis_move_to(corner, end, next_moves_for_keypresses))));
+        results.push(next_moves_for_keypresses(&format!(
+            "{}{}A",
+            single_axis_move_to(start, corner, next_moves_for_keypresses),
+            single_axis_move_to(corner, end, next_moves_for_keypresses)
+        )));
     }
 
     *results.iter().min().unwrap()
 }
 
+static CACHE: LazyLock<Mutex<HashMap<(i64, String), i64>>> = LazyLock::new(|| Mutex::new(HashMap::new()));
+fn cached_moves_for_keypresses(id: i64, sequence: &str) -> Option<i64> {
+    let cache = CACHE.lock().unwrap();
+    cache.get(&(id,sequence.to_string())).map(|r| *r)
+}
+
 fn moves_for_keypresses<F, const W: usize, const H: usize>(
+    id: i64,
     keypad: &[[char; W]; H],
     sequence: &str,
     next_moves_for_keypresses: &F,
@@ -88,16 +102,23 @@ fn moves_for_keypresses<F, const W: usize, const H: usize>(
 where
     F: Fn(&str) -> i64,
 {
-    let mut result = 0;
-    let mut prev_pos = 'A';
+    match cached_moves_for_keypresses(id, sequence) {
+        Some(r) => r,
+        None => {
+            let mut result = 0;
+            let mut prev_pos = 'A';
 
-    for c in sequence.chars() {
-        result += moves_for_keypress(keypad, prev_pos, c, next_moves_for_keypresses);
+            for c in sequence.chars() {
+                result += moves_for_keypress(keypad, prev_pos, c, next_moves_for_keypresses);
 
-        prev_pos = c;
+                prev_pos = c;
+            }
+
+            CACHE.lock().unwrap().insert((id, sequence.to_string()), result);
+
+            result
+        }
     }
-
-    result
 }
 
 impl days::Day for Day {
@@ -110,10 +131,77 @@ impl days::Day for Day {
             input
                 .lines()
                 .map(|line| {
-                    let keypresses = moves_for_keypresses(&NUMERIC, line, &|sequence| {
-                        moves_for_keypresses(&ARROWS, sequence, &|sequence| {
-                            moves_for_keypresses(&ARROWS, sequence, &|sequence: &str| {
+                    let keypresses = moves_for_keypresses(1, &NUMERIC, line, &|sequence| {
+                        moves_for_keypresses(2, &ARROWS, sequence, &|sequence| {
+                            moves_for_keypresses(3, &ARROWS, sequence, &|sequence: &str| {
                                 sequence.len() as i64
+                            })
+                        })
+                    });
+
+                    let numeric = line[0..min(3, line.len())].parse::<i64>().unwrap();
+
+                    keypresses * numeric
+                })
+                .sum::<i64>(),
+        )
+        .map(|r| r.to_string())
+    }
+    fn part2(&self, input: &str) -> Option<String> {
+        Some(
+            input
+                .lines()
+                .map(|line| {
+                    let keypresses = moves_for_keypresses(1, &NUMERIC, line, &|sequence| {
+                        moves_for_keypresses(2, &ARROWS, sequence, &|sequence| {
+                            moves_for_keypresses(3, &ARROWS, sequence, &|sequence| {
+                                moves_for_keypresses(4, &ARROWS, sequence, &|sequence| {
+                                    moves_for_keypresses(5, &ARROWS, sequence, &|sequence| {
+                                        moves_for_keypresses(6, &ARROWS, sequence, &|sequence| {
+                                            moves_for_keypresses(7, &ARROWS, sequence, &|sequence| {
+                                                moves_for_keypresses(8, &ARROWS, sequence, &|sequence| {
+                                                    moves_for_keypresses(9, &ARROWS, sequence, &|sequence| {
+                                                        moves_for_keypresses(10, &ARROWS, sequence, &|sequence| {
+                                                            moves_for_keypresses(11, &ARROWS, sequence, &|sequence| {
+                                                                moves_for_keypresses(12, &ARROWS, sequence, &|sequence| {
+                                                                    moves_for_keypresses(13, &ARROWS, sequence, &|sequence| {
+                                                                        moves_for_keypresses(14, &ARROWS, sequence, &|sequence| {
+                                                                            moves_for_keypresses(15, &ARROWS, sequence, &|sequence| {
+                                                                                moves_for_keypresses(16, &ARROWS, sequence, &|sequence| {
+                                                                                    moves_for_keypresses(17, &ARROWS, sequence, &|sequence| {
+                                                                                        moves_for_keypresses(18, &ARROWS, sequence, &|sequence| {
+                                                                                            moves_for_keypresses(19, &ARROWS, sequence, &|sequence| {
+                                                                                                moves_for_keypresses(20, &ARROWS, sequence, &|sequence| {
+                                                                                                    moves_for_keypresses(21, &ARROWS, sequence, &|sequence| {
+                                                                                                        moves_for_keypresses(22, &ARROWS, sequence, &|sequence| {
+                                                                                                            moves_for_keypresses(23, &ARROWS, sequence, &|sequence| {
+                                                                                                                moves_for_keypresses(24, &ARROWS, sequence, &|sequence| {
+                                                                                                                    moves_for_keypresses(25, &ARROWS, sequence, &|sequence| {
+                                                                                                                        moves_for_keypresses(26, &ARROWS, sequence, &|sequence: &str| {
+                                                                                                                            sequence.len() as i64
+                                                                                                                        })
+                                                                                                                    })
+                                                                                                                })
+                                                                                                            })
+                                                                                                        })
+                                                                                                    })
+                                                                                                })
+                                                                                            })
+                                                                                        })
+                                                                                    })
+                                                                                })
+                                                                            })
+                                                                        })
+                                                                    })
+                                                                })
+                                                            })
+                                                        })
+                                                    })
+                                                })
+                                            })
+                                        })
+                                    })
+                                })
                             })
                         })
                     });
@@ -126,9 +214,6 @@ impl days::Day for Day {
         )
             .map(|r| r.to_string())
     }
-    fn part2(&self, input: &str) -> Option<String> {
-        None
-    }
 }
 
 #[cfg(test)]
@@ -139,19 +224,35 @@ mod tests {
     const DAY: super::Day = super::Day;
     #[test]
     fn moves_for_keypress_A() {
-        assert_eq!(moves_for_keypress(&ARROWS, 'A', 'A', &|s: &str| s.len() as i64), 1);
-        assert_eq!(moves_for_keypress(&ARROWS, 'A', 'A', &|sequence|
-            moves_for_keypresses(&ARROWS, sequence, &|sequence: &str| {
-                sequence.len() as i64
-            })), 1);
+        assert_eq!(
+            moves_for_keypress(&ARROWS, 'A', 'A', &|s: &str| s.len() as i64),
+            1
+        );
+        assert_eq!(
+            moves_for_keypress(&ARROWS, 'A', 'A', &|sequence| moves_for_keypresses(
+                1,
+                &ARROWS,
+                sequence,
+                &|sequence: &str| { sequence.len() as i64 }
+            )),
+            1
+        );
     }
     #[test]
     fn moves_for_keypress_up() {
-        assert_eq!(moves_for_keypress(&ARROWS, 'A', '^', &|s: &str| s.len() as i64), 2);
-        assert_eq!(moves_for_keypress(&ARROWS, 'A', '^', &|sequence|
-            moves_for_keypresses(&ARROWS, sequence, &|sequence: &str| {
-                sequence.len() as i64
-            })), 8);
+        assert_eq!(
+            moves_for_keypress(&ARROWS, 'A', '^', &|s: &str| s.len() as i64),
+            2
+        );
+        assert_eq!(
+            moves_for_keypress(&ARROWS, 'A', '^', &|sequence| moves_for_keypresses(
+                1,
+                &ARROWS,
+                sequence,
+                &|sequence: &str| { sequence.len() as i64 }
+            )),
+            8
+        );
     }
     #[test]
     fn part1_one_char_3() {
