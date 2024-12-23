@@ -1,6 +1,7 @@
 use crate::days;
 use nalgebra::Vector2;
 use num::abs;
+use std::cmp::min;
 
 pub struct Day;
 
@@ -9,7 +10,7 @@ impl Day {}
 type Vec2 = Vector2<i64>;
 
 const NUMERIC: [[char; 3]; 4] = [
-    ['8', '8', '9'],
+    ['7', '8', '9'],
     ['4', '5', '6'],
     ['1', '2', '3'],
     [' ', '0', 'A'],
@@ -41,37 +42,39 @@ where
 
     let mut results = Vec::with_capacity(2);
 
+    fn single_axis_move_to<F>(start: Vec2, end: Vec2, next_moves_for_keypresses: &F) -> String
+    where
+        F: Fn(&str) -> i64,
+    {
+        let move_required = if start.x < end.x {
+            ">"
+        } else if start.x > end.x {
+            "<"
+        } else if start.y < end.y {
+            "v"
+        } else if start.y > end.y {
+            "^"
+        } else {
+            return "".to_string();
+        };
+        let press_count = abs(end.x - start.x) + abs(end.y - start.y);
+
+        move_required.repeat(press_count as usize)
+    }
+
     // up/down first
     let corner = Vec2::new(start.x, end.y);
     if keypad[corner.y as usize][corner.x as usize] != ' ' {
-        let move_required = if end.y > start.y { "v" } else { "^" };
-        let press_count = abs(end.y - start.x);
-
-        let mut result = next_moves_for_keypresses(&move_required.repeat(press_count as usize));
-
-        let move_required = if end.x > start.x { ">" } else { "<" };
-        let press_count = abs(end.x - start.y);
-
-        result += next_moves_for_keypresses(&move_required.repeat(press_count as usize));
-
-        results.push(result);
+        results.push(next_moves_for_keypresses(&format!("{}{}A",
+                                                        single_axis_move_to(start, corner, next_moves_for_keypresses),
+                                                        single_axis_move_to(corner, end, next_moves_for_keypresses))));
     }
     // left/right first
     let corner = Vec2::new(end.x, start.y);
     if keypad[corner.y as usize][corner.x as usize] != ' ' {
-        let move_required = if end.x > start.x { ">" } else { "<" };
-        let press_count = abs(end.x - start.y);
-
-        let mut result =
-            next_moves_for_keypresses(&format!("{}A", move_required.repeat(press_count as usize)));
-
-        let move_required = if end.y > start.y { "v" } else { "^" };
-        let press_count = abs(end.y - start.x);
-
-        result +=
-            next_moves_for_keypresses(&format!("{}A", move_required.repeat(press_count as usize)));
-
-        results.push(result);
+        results.push(next_moves_for_keypresses(&format!("{}{}A",
+                                                        single_axis_move_to(start, corner, next_moves_for_keypresses),
+                                                        single_axis_move_to(corner, end, next_moves_for_keypresses))));
     }
 
     *results.iter().min().unwrap()
@@ -115,7 +118,7 @@ impl days::Day for Day {
                         })
                     });
 
-                    let numeric = line[0..3].parse::<i64>().unwrap();
+                    let numeric = line[0..min(3, line.len())].parse::<i64>().unwrap();
 
                     keypresses * numeric
                 })
@@ -130,9 +133,36 @@ impl days::Day for Day {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
     use crate::days::Day;
 
     const DAY: super::Day = super::Day;
+    #[test]
+    fn moves_for_keypress_A() {
+        assert_eq!(moves_for_keypress(&ARROWS, 'A', 'A', &|s: &str| s.len() as i64), 1);
+        assert_eq!(moves_for_keypress(&ARROWS, 'A', 'A', &|sequence|
+            moves_for_keypresses(&ARROWS, sequence, &|sequence: &str| {
+                sequence.len() as i64
+            })), 1);
+    }
+    #[test]
+    fn moves_for_keypress_up() {
+        assert_eq!(moves_for_keypress(&ARROWS, 'A', '^', &|s: &str| s.len() as i64), 2);
+        assert_eq!(moves_for_keypress(&ARROWS, 'A', '^', &|sequence|
+            moves_for_keypresses(&ARROWS, sequence, &|sequence: &str| {
+                sequence.len() as i64
+            })), 8);
+    }
+    #[test]
+    fn part1_one_char_3() {
+        let text = "3";
+
+        // ^A
+        // <A >A
+        // v<<A>>^A vA^A
+
+        assert_eq!(DAY.part1(text), Some((12 * 3).to_string()))
+    }
     #[test]
     fn part1_example_a() {
         let text = "029A";
@@ -146,7 +176,7 @@ mod tests {
     #[test]
     fn part1_example_c() {
         let text = "179A";
-        assert_eq!(DAY.part1(text), Some((68 * 279).to_string()))
+        assert_eq!(DAY.part1(text), Some((68 * 179).to_string()))
     }
     #[test]
     fn part1_example_d() {
