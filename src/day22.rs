@@ -56,8 +56,6 @@ fn best_sequence(prices_list: &Vec<Vec<i64>>) -> Vec<i64> {
         .next()
         .unwrap();
 
-    println!("{result:?} {value}");
-
     result.clone()
 }
 
@@ -97,7 +95,6 @@ impl days::Day for Day {
                 let diffs: Vec<_> = window.windows(2).map(|pair| pair[1] - pair[0]).collect();
 
                 if diffs == best_sequence {
-                    println!("{window:?}");
                     result += window[4];
                     break;
                 }
