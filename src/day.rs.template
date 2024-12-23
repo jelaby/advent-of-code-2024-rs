@@ -20,6 +20,7 @@ impl days::Day for Day {
 #[cfg(test)]
 mod tests {
     use crate::days::Day;
+    use super::*;
 
     const DAY: super::Day = super::Day;
     #[test]
