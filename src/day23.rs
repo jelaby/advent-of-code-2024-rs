@@ -31,18 +31,6 @@ fn parse(input: &str) -> HashMap<&str, HashSet<&str>> {
     result
 }
 
-fn union<'a, 'b, T>(item: &'a str, group: &'b T) -> HashSet<&'a str>
-where
-    &'b T: IntoIterator<Item = &'a &'a str>,
-{
-    let mut result: HashSet<&'a str> = HashSet::new();
-    result.insert(item);
-    for i in group {
-        result.insert(i);
-    }
-    result
-}
-
 fn intersection<'a>(a: &HashSet<&'a str>, b: &HashSet<&'a str>) -> HashSet<&'a str> {
     let mut result = HashSet::new();
     a.iter().filter(|&i| b.contains(i)).for_each(|i| {
