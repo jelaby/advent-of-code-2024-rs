@@ -132,16 +132,17 @@ impl days::Day for Day {
             largest_groups.insert(vec![*computer]);
         }
 
-        let mut result = HashSet::new();
-
-        while !largest_groups.is_empty() {
-            result = largest_groups.clone();
-
-            largest_groups = all_next_largest_groups(&connections, &largest_groups);
+        loop {
+            let next_larger_groups = all_next_largest_groups(&connections, &largest_groups);
+            if next_larger_groups.is_empty() {
+                break;
+            } else {
+                largest_groups = next_larger_groups;
+            }
         }
 
-        assert_eq!(result.len(), 1);
-        let largest_set = result.iter().next().unwrap();
+        assert_eq!(largest_groups.len(), 1);
+        let largest_set = largest_groups.iter().next().unwrap();
 
         Some(largest_set.join(","))
     }
