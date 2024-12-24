@@ -31,87 +31,61 @@ fn parse(input: &str) -> HashMap<&str, HashSet<&str>> {
     result
 }
 
-//     a
-//     |
-//     b = c = d = e = f
-//     |   |
-//     g --'
-//
-//  a -> {b}
-//     b -> {a/g/c/d/e/f} -- no mutual connections -- group is just a,b
-//  b -> {a/c/d/e/f/g}
-//     a -> {b} -- no mutual connections -- group is just a,b
-//     c -> {b/g/d/e/f} -- b already in group
-//        g -> {b/c} -- only already matched members -- group b,c,g
-//     d -> {b/c/e/f} -- matches already matched members -- matches more
-//        e -> {b/c/d/f} -- matches all already matched members -- plus more
-//           f -> matches all already matched members
-//
-//fn find_mutual_groups<'a>(
-//    computer_groups: &HashMap<&'a str, HashSet<&str>>,
-//    potential_members: &HashSet<&'a str>,
-//    confirmed_members: &HashSet<&'a str>,
-//) -> Vec<Vec<&'a str>> {
-//    let result = vec![];
-//
-//    for other in potential_members {
-//        let other_group = computer_groups.get(other).unwrap();
-//
-//        let mutual_group = potential_members.intersection(other_group);
-//
-//        if mutual_group.count() == 0 {}
-//    }
-//
-//    result
-//}
-
-fn union<'a>(item: &'a str, group: &HashSet<&'a str>) -> HashSet<&'a str>
+fn union<'a, 'b, T>(item: &'a str, group: &'b T) -> HashSet<&'a str>
+where
+    &'b T: IntoIterator<Item = &'a &'a str>,
 {
     let mut result: HashSet<&'a str> = HashSet::new();
     result.insert(item);
-    group.iter().for_each(|i| { result.insert(i); });
+    for i in group {
+        result.insert(i);
+    }
     result
 }
 
 fn intersection<'a>(a: &HashSet<&'a str>, b: &HashSet<&'a str>) -> HashSet<&'a str> {
     let mut result = HashSet::new();
-    a.iter().filter(|&i| b.contains(i)).for_each(|i| { result.insert(*i); });
+    a.iter().filter(|&i| b.contains(i)).for_each(|i| {
+        result.insert(*i);
+    });
     result
 }
 
-fn confirm_group(computer_groups: &HashMap<&str, HashSet<&str>>, group: &HashSet<&str>) -> bool {
-    for other in group {
-        let other_group = computer_groups.get(&other[..]).unwrap();
-
-        for i in group {
-            // other_group must be a superset of this group
-            if !other_group.contains(i) {
-                return false;
-            }
+fn next_largest_groups<'a,'b>(
+    connections: &HashMap<&'a str, HashSet<&'a str>>,
+    group: &'b Vec<&'a str>,
+) -> HashSet<Vec<&'a str>> {
+    {
+        let mut result = HashSet::new();
+        let mut candidates = connections.get(group[0]).unwrap().clone();
+        for &t in &group[1..] {
+            candidates = intersection(connections.get(t).unwrap(), &candidates);
         }
-    }
 
-    return true;
+        for candidate in candidates {
+            let mut new_set = Vec::new();
+            for g in group {
+                new_set.push(*g)
+            }
+            new_set.push(candidate);
+            new_set.sort();
+
+            result.insert(new_set);
+        }
+        result
+    }
 }
 
-fn find_mutual_sets<'a>(
-    computer_groups: &HashMap<&'a str, HashSet<&'a str>>,
+fn all_next_largest_groups<'a,'b>(
+    connections: &HashMap<&'a str, HashSet<&'a str>>,
+    groups: &'b HashSet<Vec<&'a str>>,
 ) -> HashSet<Vec<&'a str>> {
     let mut result = HashSet::new();
-
-    for (this, group) in computer_groups {
-        let group = union(this, &group);
-
-        for other in &group {
-            let other_group = union(other, computer_groups.get(other).unwrap());
-            let mutual_group:HashSet<&str> = intersection(&group, &other_group);
-
-            if confirm_group(computer_groups, &mutual_group) {
-                result.insert(mutual_group.iter().map(|i| *i).collect());
-            }
+    for group in groups {
+        for g in next_largest_groups(connections, group) {
+            result.insert(g);
         }
     }
-
     result
 }
 
@@ -150,17 +124,34 @@ impl days::Day for Day {
         .map(|r| r.to_string())
     }
     fn part2(&self, input: &str) -> Option<String> {
-        let groups = parse(input);
+        let connections = parse(input);
 
-        let sets = find_mutual_sets(&groups);
+        let mut triples = HashSet::new();
 
-        let biggest_group = sets
-            .iter()
-            .sorted_by(|a, b| b.len().cmp(&a.len()))
-            .next()
-            .unwrap();
+        for (&this, group) in &connections {
+            for other in group {
+                let other_group = connections.get(other).unwrap();
 
-        Some(biggest_group.iter().sorted_by(|a, b| a.cmp(b)).join(","))
+                for third in group.intersection(other_group) {
+                    let mut set = vec![this, other, third];
+                    set.sort();
+                    triples.insert(set);
+                }
+            }
+        }
+
+        let mut prev_set = triples.clone();
+
+        while !triples.is_empty() {
+            prev_set = triples.clone();
+
+            triples = all_next_largest_groups(&connections, &triples);
+        }
+
+        assert_eq!(prev_set.len(), 1);
+        let largest_set = prev_set.iter().next().unwrap();
+
+        Some(largest_set.join(","))
     }
 }
 
