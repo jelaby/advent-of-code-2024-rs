@@ -95,13 +95,13 @@ impl days::Day for Day {
     }
 
     fn part1(&self, input: &str) -> Option<String> {
-        let groups = parse(input);
+        let connections = parse(input);
 
         let mut triples = HashSet::new();
 
-        for (this, group) in &groups {
+        for (this, group) in &connections {
             for other in group {
-                let other_group = groups.get(other).unwrap();
+                let other_group = connections.get(other).unwrap();
 
                 for third in group.intersection(other_group) {
                     let mut set = vec![this, other, third];
