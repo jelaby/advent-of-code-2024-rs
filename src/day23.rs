@@ -126,30 +126,22 @@ impl days::Day for Day {
     fn part2(&self, input: &str) -> Option<String> {
         let connections = parse(input);
 
-        let mut triples = HashSet::new();
+        let mut largest_groups = HashSet::new();
 
-        for (&this, group) in &connections {
-            for other in group {
-                let other_group = connections.get(other).unwrap();
-
-                for third in group.intersection(other_group) {
-                    let mut set = vec![this, other, third];
-                    set.sort();
-                    triples.insert(set);
-                }
-            }
+        for (computer, _) in &connections {
+            largest_groups.insert(vec![*computer]);
         }
 
-        let mut prev_set = triples.clone();
+        let mut result = HashSet::new();
 
-        while !triples.is_empty() {
-            prev_set = triples.clone();
+        while !largest_groups.is_empty() {
+            result = largest_groups.clone();
 
-            triples = all_next_largest_groups(&connections, &triples);
+            largest_groups = all_next_largest_groups(&connections, &largest_groups);
         }
 
-        assert_eq!(prev_set.len(), 1);
-        let largest_set = prev_set.iter().next().unwrap();
+        assert_eq!(result.len(), 1);
+        let largest_set = result.iter().next().unwrap();
 
         Some(largest_set.join(","))
     }
