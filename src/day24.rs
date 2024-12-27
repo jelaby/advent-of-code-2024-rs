@@ -31,14 +31,23 @@ enum Gate<'a> {
 }
 use Gate::*;
 
-impl Gate<'_> {
-    fn eval(&self, gates: &HashMap<&str, Gate>) -> bool {
+impl <'a> Gate<'a> {
+    fn eval(&self, gates: &HashMap<&'a str, Gate<'a>>, evaluating: &mut HashSet<&'a str>) -> Option<bool> {
         match self {
-            Fixed(val) => *val,
-            Operation(l, r, op) => op.eval(
-                gates.get(l).map(|g| g.eval(gates)).unwrap(),
-                gates.get(r).map(|g| g.eval(gates)).unwrap(),
-            ),
+            Fixed(val) => Some(*val),
+            Operation(l, r, op) => {
+                if evaluating.contains(l) || evaluating.contains(r) {
+                    None
+                } else {
+                    evaluating.insert(*l);
+                    let lv = gates.get(l).and_then(|g| g.eval(gates, evaluating))?;
+                    evaluating.remove(*l);
+                    evaluating.insert(*r);
+                    let rv = gates.get(r).and_then(|g| g.eval(gates, evaluating))?;
+                    evaluating.remove(*r);
+                    Some(op.eval(lv, rv))
+                }
+            }
         }
     }
 }
@@ -181,19 +190,22 @@ where
     (0..=45).find_map(|i| {
         let b = 0 ^ (1 << i);
 
-        let result = eval(&mutate(&gates, bits, a, b));
+        match eval(&mutate(&gates, bits, a, b)) {
+            None => None,
+            Some(result) => {
+                let expected = operation(a, b);
 
-        let expected = operation(a, b);
+                let incorrect_bits_this_time = expected ^ result;
 
-        let incorrect_bits_this_time = expected ^ result;
+                if incorrect_bits_this_time.count_ones() == 2 {
+                    let lsb = incorrect_bits_this_time.trailing_zeros();
+                    let msb = (incorrect_bits_this_time ^ (1 << lsb)).trailing_zeros();
 
-        if incorrect_bits_this_time.count_ones() == 2 {
-            let lsb = incorrect_bits_this_time.trailing_zeros();
-            let msb = (incorrect_bits_this_time ^ (1 << lsb)).trailing_zeros();
-
-            Some((i, lsb, msb))
-        } else {
-            None
+                    Some((i, lsb, msb))
+                } else {
+                    None
+                }
+            }
         }
     })
 }
@@ -266,11 +278,14 @@ where
 {
     let b = 0 ^ (1 << input_bit);
 
-    let result = eval(&mutate(&gates, bits, a, b));
+    match eval(&mutate(&gates, bits, a, b)) {
+        None => false,
+        Some(result) => {
+            let expected = operation(a, b);
 
-    let expected = operation(a, b);
-
-    result == expected
+            result == expected
+        }
+    }
 }
 
 fn do_part2<F>(input: &str, swap_count: i64, operation: F) -> Option<String>
@@ -316,15 +331,9 @@ where
                     for y in x + 1..swap_candidates.len() {
                         let x = swap_candidates[x];
                         let y = swap_candidates[y];
-                        if check_gates(
-                            &swap_gates(&gates, x, y),
-                            bits,
-                            a,
-                            input_bit,
-                            &operation,
-                        ) {
+                        if check_gates(&swap_gates(&gates, x, y), bits, a, input_bit, &operation) {
                             result.push((x, y));
-                            gates = swap_gates(&gates,x,y);
+                            gates = swap_gates(&gates, x, y);
                         }
                     }
                 }
@@ -334,16 +343,20 @@ where
     Some(result.iter().flat_map(|(x, y)| [x, y]).sorted().join(","))
 }
 
-fn eval(gates: &HashMap<&str, Gate>) -> i64 {
+fn eval(gates: &HashMap<&str, Gate>) -> Option<i64> {
     gates.iter()
         .filter(|(name, _)| name[0..1] == *"z")
-        .map(|(name, gate)| (name, gate.eval(&gates)))
+        .map(|(name, gate)| (name, gate.eval(&gates, &mut HashSet::new())))
         .map(|(name, value)| (name[1..].parse::<i64>().unwrap(), value))
         .map(|(name, value)| match value {
-            true => 1,
-            false => 0,
-        } << name)
-        .sum::<i64>()
+            Some(true) => Some(1 << name),
+            Some(false) => Some(0),
+            None => None,
+        })
+        .fold(Some(0), |acc,i| match acc {
+            None => None,
+            Some(a) => i.map(|b| a + b)
+        })
 }
 
 impl days::Day for Day {
@@ -354,7 +367,7 @@ impl days::Day for Day {
     fn part1(&self, input: &str) -> Option<String> {
         let gates = parse(input);
 
-        Some(eval(&gates)).map(|r| r.to_string())
+        eval(&gates).map(|r| r.to_string())
     }
     fn part2(&self, input: &str) -> Option<String> {
         do_part2(input, 4, |a, b| a + b)
