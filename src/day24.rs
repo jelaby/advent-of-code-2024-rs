@@ -1,6 +1,6 @@
 use crate::days;
+use itertools::Itertools;
 use std::collections::{HashMap, HashSet, VecDeque};
-use rand::random;
 
 pub struct Day;
 
@@ -131,18 +131,20 @@ fn source_gates<'a>(gates: &HashMap<&'a str, Gate<'a>>, gate: &'a str) -> HashSe
     queue.push_back(gate);
 
     while let Some(gate) = queue.pop_front() {
-
-        result.insert(gate);
-
-        match gates.get(gate) {
-            Some(Fixed(val)) => {},
-            Some(Operation(a, b, _)) => {
-                    queue.push_back(*a);
-                    queue.push_back(*b);
-            },
-            None => { panic!("Could not find gate {gate}"); }
+        if &gate[0..1] != "x" && &gate[0..1] != "y" {
+            result.insert(gate);
         }
 
+        match gates.get(gate) {
+            Some(Fixed(val)) => {}
+            Some(Operation(a, b, _)) => {
+                queue.push_back(*a);
+                queue.push_back(*b);
+            }
+            None => {
+                panic!("Could not find gate {gate}");
+            }
+        }
     }
 
     result
@@ -150,139 +152,186 @@ fn source_gates<'a>(gates: &HashMap<&'a str, Gate<'a>>, gate: &'a str) -> HashSe
 
 fn union<'a>(l: &HashSet<&'a str>, r: &HashSet<&'a str>) -> HashSet<&'a str> {
     let mut result = HashSet::new();
-    l.iter().for_each(|i| { result.insert(*i); });
-    r.iter().for_each(|i| { result.insert(*i); });
+    l.iter().for_each(|i| {
+        result.insert(*i);
+    });
+    r.iter().for_each(|i| {
+        result.insert(*i);
+    });
     result
 }
 
-fn minus<'a,'b>(l: &HashSet<&'a str>, r: &HashSet<&'b str>) -> HashSet<&'a str> {
+fn minus<'a, 'b>(l: &HashSet<&'a str>, r: &HashSet<&'b str>) -> HashSet<&'a str> {
     let mut result = HashSet::new();
-    l.iter().filter(|&&i| !r.contains(i)).for_each(|i| { result.insert(*i); });
+    l.iter().filter(|&&i| !r.contains(i)).for_each(|i| {
+        result.insert(*i);
+    });
     result
 }
 
-fn do_part2<F>(input: &str, swap_count: i64, operation: F) -> Option<String>
+fn find_candidate_output_bits<F>(
+    gates: &HashMap<&str, Gate>,
+    bits: i64,
+    a: i64,
+    operation: &F,
+) -> Option<(u32, u32, u32)>
 where
     F: Fn(i64, i64) -> i64,
 {
-    let mut rng = rand::thread_rng();
-    let gates = parse(input);
-    let bits = input_bits(&gates);
-
-    let ones = (0..bits).map(|b| 1 << b).sum::<i64>();
-
-    let mut incorrect_bits = 0;
-
-    for i in 0..bits {
-        let a = random::<i64>() & ones;
-        let b = random::<i64>() & ones;
-
-        let result = eval(&mutate(&gates, bits, a, b));
-
-        let expected = operation(a, b);
-
-        //println!("{a} + {b} -> ({expected}) {result}");
-        //println!("    {a:045b}\n  + {b:045b}\n -> {expected:045b}\n    {result:045b}");
-
-        println!("    {:045b}", expected ^ result);
-
-        incorrect_bits |= expected ^ result;
-    }
-    for i in 0..bits {
-        let a = ones;
-        let b = ones ^ (1 << i);
-
-        let result = eval(&mutate(&gates, bits, a, b));
-
-        let expected = operation(a, b);
-
-        //println!("{a} + {b} -> ({expected}) {result}");
-        //println!("    {a:045b}\n  + {b:045b}\n -> {expected:045b}\n    {result:045b}");
-
-        println!("    {:045b}", expected ^ result);
-
-        incorrect_bits |= expected ^ result;
-    }
-    for i in 0..bits {
-        let a = 0;
+    (0..=45).find_map(|i| {
         let b = 0 ^ (1 << i);
 
         let result = eval(&mutate(&gates, bits, a, b));
 
         let expected = operation(a, b);
 
-        //println!("{a} + {b} -> ({expected}) {result}");
-        //println!("    {a:045b}\n  + {b:045b}\n -> {expected:045b}\n    {result:045b}");
-
-        println!("    {:045b}", expected ^ result);
-
         let incorrect_bits_this_time = expected ^ result;
 
-        incorrect_bits |= expected ^ result;
-
         if incorrect_bits_this_time.count_ones() == 2 {
-
             let lsb = incorrect_bits_this_time.trailing_zeros();
             let msb = (incorrect_bits_this_time ^ (1 << lsb)).trailing_zeros();
 
-            let lsb_gate = format!("z{lsb:02}");
-            let msb_gate = format!("z{msb:02}");
+            Some((i, lsb, msb))
+        } else {
+            None
+        }
+    })
+}
 
-            let lsb_gates = source_gates(&gates, &lsb_gate);
-            let msb_gates = source_gates(&gates, &msb_gate);
+fn find_candidate_swap_gates<'a>(
+    gates: &HashMap<&'a str, Gate<'a>>,
+    lsb: u32,
+    msb: u32,
+) -> HashSet<&'a str> {
+    let lsb_gate = gates
+        .get_key_value(format!("z{lsb:02}").as_str())
+        .unwrap()
+        .0;
+    let msb_gate = gates
+        .get_key_value(format!("z{msb:02}").as_str())
+        .unwrap()
+        .0;
 
-            println!("{lsb_gates:?}");
-            println!("{msb_gates:?}");
+    let lsb_gates = source_gates(&gates, &lsb_gate);
+    let msb_gates = source_gates(&gates, &msb_gate);
 
-            let mut common_gates = union(&lsb_gates, &msb_gates);
-            for b in (0..lsb).rev() {
-                common_gates = minus(&common_gates, &source_gates(&gates, &format!("z{b:02}")));
-            }
+    println!("{lsb_gates:?}");
+    println!("{msb_gates:?}");
 
-            println!("{common_gates:?}");
-
+    let mut common_gates = union(&lsb_gates, &msb_gates);
+    for b in (0..lsb).rev() {
+        for g in source_gates(
+            &gates,
+            gates.get_key_value(format!("z{b:02}").as_str()).unwrap().0,
+        ) {
+            common_gates.remove(g);
         }
     }
-    println!("X   {incorrect_bits:045b}");
 
-    let mut potential_swaps = HashSet::new();
+    common_gates
+}
 
-    for i in 0..(bits+1) {
-        if incorrect_bits & (1<<i) != 0 {
-            let output = format!("z{i:02}");
+fn swap_gates<'a>(
+    gates: &HashMap<&'a str, Gate<'a>>,
+    a: &'a str,
+    b: &'a str,
+) -> HashMap<&'a str, Gate<'a>> {
+    let mut result = HashMap::new();
 
-            // swap for string from gates
-            let (&output, &value) = gates.get_key_value(output.as_str()).unwrap();
+    for (&name, gate) in gates {
+        let name = {
+            if name == a {
+                b
+            } else if name == b {
+                a
+            } else {
+                name
+            }
+        };
+        result.insert(name, gate.clone());
+    }
 
-            potential_swaps.insert(output);
+    result
+}
 
-            let mut queue = VecDeque::from(vec![value]);
-            while let Some(value) = queue.pop_front() {
-                match value {
-                    Fixed(_) => (),
-                    Operation(a, b, op) => {
-                        if &a[0..1] != "x" && &a[0..1] != "y" {
-                            match op {
-                                And => { potential_swaps.insert(a); },
-                                _ => (),
-                            }
+fn check_gates<'a, F>(
+    gates: &HashMap<&'a str, Gate<'a>>,
+    bits: i64,
+    a: i64,
+    input_bit: u32,
+    operation: F,
+) -> bool
+where
+    F: Fn(i64, i64) -> i64,
+{
+    let b = 0 ^ (1 << input_bit);
+
+    let result = eval(&mutate(&gates, bits, a, b));
+
+    let expected = operation(a, b);
+
+    result == expected
+}
+
+fn do_part2<F>(input: &str, swap_count: i64, operation: F) -> Option<String>
+where
+    F: Fn(i64, i64) -> i64,
+{
+    let gates = parse(input);
+    let bits = input_bits(&gates);
+
+    let ones = {
+        let mut ones = 0;
+        for b in 0..45 {
+            ones += 1 << b;
+        }
+        ones
+    };
+    // get 0000 for a+b and 1111 for a&b
+    let a = {
+        let mut a = ones;
+        for _ in (0..45) {
+            a = operation(a, a) & ones
+        }
+        a
+    };
+
+    let mut result = Vec::new();
+    let mut gates = gates;
+
+    let mut finished = false;
+    while !finished {
+        finished = true;
+
+        match find_candidate_output_bits(&gates, bits, a, &operation) {
+            None => {}
+            Some((input_bit, lsb, msb)) => {
+                finished = false;
+
+                let swap_candidates: Vec<&str> = find_candidate_swap_gates(&gates, lsb, msb)
+                    .into_iter()
+                    .collect();
+
+                for x in 0..swap_candidates.iter().len() {
+                    for y in x + 1..swap_candidates.len() {
+                        let x = swap_candidates[x];
+                        let y = swap_candidates[y];
+                        if check_gates(
+                            &swap_gates(&gates, x, y),
+                            bits,
+                            a,
+                            input_bit,
+                            &operation,
+                        ) {
+                            result.push((x, y));
+                            gates = swap_gates(&gates,x,y);
                         }
-                        if &b[0..1] != "x" && &b[0..1] != "y" {
-                            match op {
-                                And => { potential_swaps.insert(b); },
-                                _ => (),
-                            }
-                        }
-                        queue.push_back(*gates.get(a).unwrap());
-                        queue.push_back(*gates.get(b).unwrap());
                     }
                 }
             }
         }
     }
-    println!("Swaps: {potential_swaps:?} {}", potential_swaps.len());
-
-    None
+    Some(result.iter().flat_map(|(x, y)| [x, y]).sorted().join(","))
 }
 
 fn eval(gates: &HashMap<&str, Gate>) -> i64 {
