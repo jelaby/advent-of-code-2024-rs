@@ -1,3 +1,4 @@
+use std::cmp::max;
 use crate::days;
 use itertools::Itertools;
 use std::collections::{HashMap, HashSet, VecDeque};
@@ -280,7 +281,7 @@ fn find_candidate_swap_gates<'a>(
     println!("{msb_gates:?}");
 
     let mut common_gates = union(&lsb_gates, &msb_gates);
-    for b in (0..lsb).rev() {
+    for b in 0..(max(1,lsb)-1) {
         for g in source_gates(
             &gates,
             gates.get_key_value(format!("z{b:02}").as_str()).unwrap().0,
@@ -363,6 +364,7 @@ where
         bits: usize,
         a: i64,
         swap_count: i64,
+        previous_errors: usize,
         operation: &F,
     ) -> Option<Vec<(&'a str, &'a str)>>
     where
@@ -387,7 +389,14 @@ where
                 let x = swap_candidates[x];
                 let y = swap_candidates[y];
 
-                match solve(&swap_gates(gates, x, y), bits, a, swap_count - 1, operation) {
+                let modified_gates = swap_gates(&gates, x, y);
+
+                let errors_now = count_errors(&modified_gates, bits, a, operation);
+                if errors_now > previous_errors {
+                    return None
+                }
+
+                match solve(&modified_gates, bits, a, swap_count - 1, errors_now, operation) {
                     None => continue,
                     Some(mut result) => {
                         result.push((x, y));
@@ -399,7 +408,7 @@ where
         None
     }
 
-    let result = solve(&gates, bits, a, swap_count, &operation)?;
+    let result = solve(&gates, bits, a, swap_count, count_errors(&gates, bits, a, &operation), &operation)?;
     Some(result.iter().flat_map(|(x, y)| [x, y]).sorted().join(","))
 }
 
