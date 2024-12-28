@@ -210,6 +210,28 @@ where
     })
 }
 
+fn count_errors<F>(
+    gates: &HashMap<&str, Gate>,
+    bits: i64,
+    a: i64,
+    operation: &F,
+) -> usize
+where
+    F: Fn(i64, i64) -> i64,
+{
+    (0..=45).filter(|i| {
+        let b = 0 ^ (1 << i);
+
+        match eval(&mutate(&gates, bits, a, b)) {
+            None => true,
+            Some(result) => {
+                let expected = operation(a, b);
+                expected != result
+            }
+        }
+    }).count()
+}
+
 fn find_candidate_swap_gates<'a>(
     gates: &HashMap<&'a str, Gate<'a>>,
     lsb: u32,
@@ -271,21 +293,13 @@ fn check_gates<'a, F>(
     bits: i64,
     a: i64,
     input_bit: u32,
-    operation: F,
+    operation: &F,
+    previous_errors: usize
 ) -> bool
 where
     F: Fn(i64, i64) -> i64,
 {
-    let b = 0 ^ (1 << input_bit);
-
-    match eval(&mutate(&gates, bits, a, b)) {
-        None => false,
-        Some(result) => {
-            let expected = operation(a, b);
-
-            result == expected
-        }
-    }
+    count_errors(gates, bits, a, operation) < previous_errors
 }
 
 fn do_part2<F>(input: &str, swap_count: i64, operation: F) -> Option<String>
@@ -314,6 +328,14 @@ where
     let mut result = Vec::new();
     let mut gates = gates;
 
+    fn contains<'a>(s: &Vec<(&'a str, &'a str)>, a: &'a str, b: &'a str) -> bool {
+        s.iter().any(|&(x,y)| {
+            (x == a && y == b)
+            || (x == b && y == a)
+            || x == a || x == b || y == a || y == b
+        })
+    }
+
     let mut finished = false;
     while !finished {
         finished = true;
@@ -323,6 +345,8 @@ where
             Some((input_bit, lsb, msb)) => {
                 finished = false;
 
+                let error_count = count_errors(&gates, bits, a, &operation);
+
                 let swap_candidates: Vec<&str> = find_candidate_swap_gates(&gates, lsb, msb)
                     .into_iter()
                     .collect();
@@ -331,9 +355,10 @@ where
                     for y in x + 1..swap_candidates.len() {
                         let x = swap_candidates[x];
                         let y = swap_candidates[y];
-                        if check_gates(&swap_gates(&gates, x, y), bits, a, input_bit, &operation) {
+                        if !contains(&result, x,y) && check_gates(&swap_gates(&gates, x, y), bits, a, input_bit, &operation, error_count) {
                             result.push((x, y));
                             gates = swap_gates(&gates, x, y);
+                            println!("Swapping {x} {y} -> {result:?}");
                         }
                     }
                 }
