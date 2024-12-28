@@ -150,7 +150,7 @@ fn source_gates<'a>(gates: &HashMap<&'a str, Gate<'a>>, gate: &'a str) -> HashSe
         }
 
         match gates.get(gate) {
-            Some(Fixed(val)) => {}
+            Some(Fixed(_)) => {}
             Some(Operation(a, b, _)) => {
                 queue.push_back(*a);
                 queue.push_back(*b);
@@ -264,7 +264,7 @@ fn find_candidate_swap_gates<'a>(
     gates: &HashMap<&'a str, Gate<'a>>,
     lsb: u32,
     msb: u32,
-) -> HashSet<&'a str> {
+) -> (HashSet<&'a str>, HashSet<&'a str>) {
     let lsb_gate = gates
         .get_key_value(format!("z{lsb:02}").as_str())
         .unwrap()
@@ -274,23 +274,25 @@ fn find_candidate_swap_gates<'a>(
         .unwrap()
         .0;
 
-    let lsb_gates = source_gates(&gates, &lsb_gate);
-    let msb_gates = source_gates(&gates, &msb_gate);
+    let mut lsb_gates = source_gates(&gates, &lsb_gate);
+    let mut msb_gates = source_gates(&gates, &msb_gate);
 
-    println!("{lsb_gates:?}");
-    println!("{msb_gates:?}");
+    println!("   LSB -> {:?}", lsb_gates.iter().sorted().collect::<Vec<_>>());
+    println!("   MSB -> {:?}", msb_gates.iter().sorted().collect::<Vec<_>>());
 
-    let mut common_gates = union(&lsb_gates, &msb_gates);
     for b in 0..(max(1,lsb)-1) {
         for g in source_gates(
             &gates,
             gates.get_key_value(format!("z{b:02}").as_str()).unwrap().0,
         ) {
-            common_gates.remove(g);
+            lsb_gates.remove(g);
+            msb_gates.remove(g);
         }
     }
 
-    common_gates
+    //println!("Common -> {common_gates:?}");
+
+    (lsb_gates, msb_gates)
 }
 
 fn swap_gates<'a>(
@@ -380,21 +382,17 @@ where
 
         let (input_bit, lsb, msb) = find_candidate_output_bits(&gates, bits, a, &operation)?;
 
-        let swap_candidates: Vec<&str> = find_candidate_swap_gates(&gates, lsb, msb)
-            .into_iter()
-            .collect();
+        let (left_candidates, right_candidates) = find_candidate_swap_gates(&gates, lsb, msb);
 
-        for x in 0..swap_candidates.iter().len() {
-            for y in x + 1..swap_candidates.len() {
-                let x = swap_candidates[x];
-                let y = swap_candidates[y];
-
+        for &x in &left_candidates {
+            for &y in &right_candidates {
                 let modified_gates = swap_gates(&gates, x, y);
 
                 let errors_now = count_errors(&modified_gates, bits, a, operation);
-                if errors_now > previous_errors {
-                    return None
+                if errors_now >= previous_errors {
+                    continue;
                 }
+                println!("Swapping {x} with {y} (errors reduced from {previous_errors} to {errors_now}");
 
                 match solve(&modified_gates, bits, a, swap_count - 1, errors_now, operation) {
                     None => continue,
