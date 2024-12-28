@@ -2,6 +2,7 @@ use std::cmp::max;
 use crate::days;
 use itertools::Itertools;
 use std::collections::{HashMap, HashSet, VecDeque};
+use rand::random;
 
 pub struct Day;
 
@@ -332,6 +333,33 @@ where
     count_errors(gates, bits, a, operation) < previous_errors
 }
 
+fn check_random<F>(gates: &HashMap<&str, Gate>, bits: usize, operation: &F) -> bool
+where F: Fn(i64,i64) -> i64 {
+    let ones = ones(bits);
+    for _ in 0..100 {
+        let a = random::<i64>() & ones;
+        let b = random::<i64>() & ones;
+
+        let expected = operation(a,b);
+
+        match eval(&set_inputs(gates, bits, a, b)) {
+            None => return false,
+            Some(actual) => if expected != actual {
+                return false;
+            }
+        }
+    }
+    true
+}
+
+fn ones(bits: usize) -> i64 {
+    let mut ones = 0;
+    for b in 0..=bits {
+        ones += 1 << b;
+    }
+    ones
+}
+
 fn do_part2<F>(input: &str, swap_count: i64, operation: F) -> Option<String>
 where
     F: Fn(i64, i64) -> i64,
@@ -339,13 +367,7 @@ where
     let gates = parse(input);
     let bits = input_bits(&gates);
 
-    let ones = {
-        let mut ones = 0;
-        for b in 0..=bits {
-            ones += 1 << b;
-        }
-        ones
-    };
+    let ones = ones(bits);
     // get 0000 for a+b and 1111 for a&b
     let a = {
         let mut a = ones;
@@ -373,7 +395,7 @@ where
         F: Fn(i64, i64) -> i64,
     {
         if swap_count == 0 {
-            return if count_errors(&gates, bits, a, operation) == 0 {
+            return if count_errors(&gates, bits, a, operation) == 0 && check_random(&gates, bits, operation) {
                 Some(Vec::new())
             } else {
                 None
