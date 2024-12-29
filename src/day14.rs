@@ -124,27 +124,6 @@ fn do_part2(input: &str, sizex: i64, sizey: i64) -> Option<i64> {
     None
 }
 
-fn show_map(robots: &Vec<Robot>, size: &Vector2<i64>, time: i64) {
-    let robots = go(robots, *size, time);
-
-    let mut result = DMatrix::<usize>::zeros(size.x as usize, size.y as usize);
-
-    robots
-        .iter()
-        .for_each(|r| result[(r.p.x as usize, r.p.y as usize)] += 1);
-
-    for y in 0..size.y as usize {
-        for x in 0..size.x as usize {
-            if result[(x, y)] > 0 {
-                print!("#");
-            } else {
-                print!(" ");
-            }
-        }
-        println!();
-    }
-}
-
 impl days::Day for Day {
     fn day(&self) -> u32 {
         14
@@ -164,7 +143,6 @@ mod tests {
     use crate::day14::{do_part1, go};
     use nalgebra::Vector2;
 
-    const DAY: super::Day = super::Day;
     #[test]
     fn part1_example1() {
         let text = "\
