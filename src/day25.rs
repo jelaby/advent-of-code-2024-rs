@@ -14,7 +14,7 @@ fn parse(input: &str) -> (Vec<Vec<usize>>, Vec<Vec<usize>>) {
             let mut lines = schematic.lines();
             if lines.next().unwrap() == "#####" {
                 let lock = lines.enumerate()
-                    .fold(vec![0usize;5], |mut acc, (i, line)| {
+                    .fold(vec![0usize;5], |acc, (i, line)| {
                         line.chars()
                             .map(|c| match c {
                                 '#' => i+1,
@@ -27,7 +27,7 @@ fn parse(input: &str) -> (Vec<Vec<usize>>, Vec<Vec<usize>>) {
                 locks.push(lock);
             } else {
                 let key = lines.enumerate()
-                    .fold(vec![0usize;5], |mut acc, (i, line)| {
+                    .fold(vec![0usize;5], |acc, (i, line)| {
                         line.chars()
                             .map(|c| match c {
                                 '#' => 5-i,
@@ -58,7 +58,7 @@ impl days::Day for Day {
             .sum::<usize>())
             .map(|r| r.to_string())
     }
-    fn part2(&self, input: &str) -> Option<String> {
+    fn part2(&self, _input: &str) -> Option<String> {
         None
     }
 }
@@ -208,6 +208,6 @@ mod tests {
     #[test]
     fn part2_example1() {
         let text = "";
-        assert_eq!(DAY.part2(text), Some("4".to_string()))
+        assert_eq!(DAY.part2(text), None)
     }
 }
