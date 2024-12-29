@@ -14,7 +14,7 @@ fn parse(input: &str) -> (Vec<Vec<bool>>, (usize, usize), (usize, usize)) {
         .find_map(|(y, line)| {
             line.iter().enumerate().find_map(|(x, c)| {
                 if *c == 'S' {
-                    Some((x as usize, y as usize))
+                    Some((x, y))
                 } else {
                     None
                 }
@@ -27,7 +27,7 @@ fn parse(input: &str) -> (Vec<Vec<bool>>, (usize, usize), (usize, usize)) {
         .find_map(|(y, line)| {
             line.iter().enumerate().find_map(|(x, c)| {
                 if *c == 'E' {
-                    Some((x as usize, y as usize))
+                    Some((x, y))
                 } else {
                     None
                 }
@@ -40,7 +40,7 @@ fn parse(input: &str) -> (Vec<Vec<bool>>, (usize, usize), (usize, usize)) {
         .map(|row| row.iter().map(|c| *c == '#').collect())
         .collect();
 
-    return (map, start, end);
+    (map, start, end)
 }
 
 const WALL_COST: i64 = i32::MAX as i64;
@@ -73,8 +73,6 @@ fn get<T: Copy>(map: &Vec<Vec<T>>, x: i64, y: i64, default: T) -> T {
         map[y as usize][x as usize]
     }
 }
-
-const DIRS: [(i64, i64); 4] = [(0, 1), (1, 0), (0, -1), (-1, 0)];
 
 fn find_modern_cheats_from<F>(
     map: &Vec<Vec<bool>>,
