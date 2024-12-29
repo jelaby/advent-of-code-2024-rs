@@ -1,7 +1,5 @@
 use crate::days;
-use itertools::Itertools;
 use std::collections::{HashMap, HashSet};
-use std::hash::Hash;
 
 pub struct Day;
 
