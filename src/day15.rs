@@ -1,8 +1,7 @@
 use crate::day15::Block::*;
 use crate::day15::Dir::*;
 use crate::days;
-use nalgebra::{Vector2};
-use num::{Num, NumCast};
+use nalgebra::Vector2;
 
 pub struct Day;
 
@@ -10,43 +9,43 @@ impl Day {}
 
 #[derive(Copy, Clone, Debug)]
 enum Block {
-    SPACE,
-    ROBOT,
-    WALL,
-    CRATE,
-    CRATE_L,
-    CRATE_R,
+    Space,
+    Robot,
+    Wall,
+    Crate,
+    CrateLeft,
+    CrateRight,
 }
 
 #[derive(Copy, Clone, Debug)]
 enum Dir {
-    LEFT,
-    RIGHT,
-    UP,
-    DOWN,
+    Left,
+    Right,
+    Up,
+    Down,
 }
 
 fn parse(input: &str, part2: bool) -> (Vec<Vec<Block>>, Vector2<usize>, Vec<Dir>) {
     let mut parts = input.split_terminator("\n\n");
 
-    let mut map: Vec<Vec<Block>> = parts
+    let map: Vec<Vec<Block>> = parts
         .next()
         .unwrap()
         .lines()
         .map(|line| {
             line.chars()
                 .map(|c| match c {
-                    '#' => WALL,
-                    '.' => SPACE,
-                    'O' => CRATE,
-                    '@' => ROBOT,
+                    '#' => Wall,
+                    '.' => Space,
+                    'O' => Crate,
+                    '@' => Robot,
                     _ => panic!("Unrecognised map char {c}"),
                 })
                 .collect()
         })
         .collect();
 
-    let mut map = if part2 { to_part2(&map) } else { map };
+    let map = if part2 { to_part2(&map) } else { map };
 
     let robot = map
         .iter()
@@ -54,12 +53,10 @@ fn parse(input: &str, part2: bool) -> (Vec<Vec<Block>>, Vector2<usize>, Vec<Dir>
         .find_map(|(y, row)| {
             row.iter()
                 .enumerate()
-                .find(|(x, &block)| matches!(block, ROBOT))
+                .find(|(_, &block)| matches!(block, Robot))
                 .map(|(x, _)| Vector2::new(x, y))
         })
         .unwrap();
-
-    //map[robot.y][robot.x] = SPACE;
 
     let commands = parts
         .next()
@@ -67,10 +64,10 @@ fn parse(input: &str, part2: bool) -> (Vec<Vec<Block>>, Vector2<usize>, Vec<Dir>
         .lines()
         .flat_map(|line| line.chars())
         .map(|c| match c {
-            '<' => LEFT,
-            '>' => RIGHT,
-            '^' => UP,
-            'v' => DOWN,
+            '<' => Left,
+            '>' => Right,
+            '^' => Up,
+            'v' => Down,
             _ => panic!("Unrecognised command char {c}"),
         })
         .collect();
@@ -83,10 +80,10 @@ fn to_part2(map: &Vec<Vec<Block>>) -> Vec<Vec<Block>> {
         .map(|row| {
             row.iter()
                 .flat_map(|block| match block {
-                    SPACE => [SPACE, SPACE].into_iter(),
-                    ROBOT => [ROBOT, SPACE].into_iter(),
-                    WALL => [WALL, WALL].into_iter(),
-                    CRATE => [CRATE_L, CRATE_R].into_iter(),
+                    Space => [Space, Space].into_iter(),
+                    Robot => [Robot, Space].into_iter(),
+                    Wall => [Wall, Wall].into_iter(),
+                    Crate => [CrateLeft, CrateRight].into_iter(),
                     _ => panic!("Unexpected {block:?} while converting to part 2"),
                 })
                 .collect()
@@ -96,10 +93,10 @@ fn to_part2(map: &Vec<Vec<Block>>) -> Vec<Vec<Block>> {
 
 fn vec_for(dir: Dir) -> Vector2<i64> {
     match dir {
-        LEFT => Vector2::new(-1, 0),
-        RIGHT => Vector2::new(1, 0),
-        UP => Vector2::new(0, -1),
-        DOWN => Vector2::new(0, 1),
+        Left => Vector2::new(-1, 0),
+        Right => Vector2::new(1, 0),
+        Up => Vector2::new(0, -1),
+        Down => Vector2::new(0, 1),
     }
 }
 
@@ -108,10 +105,10 @@ fn can_move_block(map: &mut Vec<Vec<Block>>, p: Vector2<usize>, v: Vector2<i64>)
     let r = Vector2::new(1, 0);
 
     match map[p.y][p.x] {
-        SPACE => true,
-        WALL => false,
-        CRATE => can_move_block(map, n, v),
-        CRATE_L => {
+        Space => true,
+        Wall => false,
+        Crate => can_move_block(map, n, v),
+        CrateLeft => {
             if v.y == 0 {
                 if v.x == 1 {
                     can_move_block(map, n + r, v)
@@ -122,8 +119,8 @@ fn can_move_block(map: &mut Vec<Vec<Block>>, p: Vector2<usize>, v: Vector2<i64>)
                 can_move_block(map, n, v) && can_move_block(map, n + r, v)
             }
         }
-        CRATE_R => can_move_block(map, p - r, v),
-        ROBOT => can_move_block(map, n, v),
+        CrateRight => can_move_block(map, p - r, v),
+        Robot => can_move_block(map, n, v),
     }
 }
 
@@ -136,41 +133,41 @@ fn move_block(map: &mut Vec<Vec<Block>>, p: Vector2<usize>, v: Vector2<i64>) -> 
     }
 
     match map[p.y][p.x] {
-        SPACE => {
+        Space => {
         }
-        WALL => panic!("Tried to move wall at {p:?}+{v:?} => {n:?}"),
-        CRATE => {
+        Wall => panic!("Tried to move wall at {p:?}+{v:?} => {n:?}"),
+        Crate => {
             move_block(map, n, v);
             map[n.y][n.x] = map[p.y][p.x];
-            map[p.y][p.x] = SPACE;
+            map[p.y][p.x] = Space;
         }
-        CRATE_L => {
+        CrateLeft => {
             if v.x == 1 {
                 move_block(map, n + r, v);
                 map[n.y][n.x + 1] = map[n.y][n.x];
                 map[n.y][n.x] = map[p.y][p.x];
-                map[p.y][p.x] = SPACE;
+                map[p.y][p.x] = Space;
             } else if v.x == -1 {
                 move_block(map, n, v);
                 map[n.y][n.x] = map[p.y][p.x];
                 map[p.y][p.x] = map[p.y][p.x + 1];
-                map[p.y][p.x + 1] = SPACE;
+                map[p.y][p.x + 1] = Space;
             } else {
                 move_block(map, n + r, v);
                 move_block(map, n, v);
                 map[n.y][n.x] = map[p.y][p.x];
                 map[n.y][n.x + 1] = map[p.y][p.x + 1];
-                map[p.y][p.x] = SPACE;
-                map[p.y][p.x + 1] = SPACE;
+                map[p.y][p.x] = Space;
+                map[p.y][p.x + 1] = Space;
             }
         }
-        CRATE_R => {
+        CrateRight => {
             move_block(map, p - r, v);
         }
-        ROBOT => {
+        Robot => {
             move_block(map, n, v);
             map[n.y][n.x] = map[p.y][p.x];
-            map[p.y][p.x] = SPACE;
+            map[p.y][p.x] = Space;
         }
     }
 
@@ -183,33 +180,23 @@ fn score(map: &Vec<Vec<Block>>) -> usize {
         .flat_map(|(y, row)| {
             row.iter()
                 .enumerate()
-                .map(move |(x, c)| if matches!(c, CRATE) || matches!(c, CRATE_L) { y * 100 + x } else { 0 })
+                .map(move |(x, c)| if matches!(c, Crate) || matches!(c, CrateLeft) { y * 100 + x } else { 0 })
         })
         .sum()
 }
 
-fn show_map(map: &Vec<Vec<Block>>, robot: Vector2<usize>) {
-    println!();
-    for (y,row) in map.iter().enumerate() {
-        for (x,block) in row.iter().enumerate() {
-            print!(
-                "{}",
-                if x == robot.x && y == robot.y {
-                    '@'
-                } else {
-                    match block {
-                        SPACE => ' ',
-                        ROBOT => '*',
-                        CRATE => 'O',
-                        WALL => '#',
-                        CRATE_L => '[',
-                        CRATE_R => ']',
-                    }
-                }
-            );
+fn solve(input: &str, part2: bool) -> Option<String> {
+    let (mut map, mut pos, commands) = parse(input, part2);
+
+    for command in commands {
+        let dir = vec_for(command);
+
+        if move_block(&mut map, pos, dir) {
+            pos = (pos.cast() + dir).map(|i| i as usize);
         }
-        println!();
     }
+
+    Some(score(&map) as i64).map(|r| r.to_string())
 }
 
 impl days::Day for Day {
@@ -218,30 +205,10 @@ impl days::Day for Day {
     }
 
     fn part1(&self, input: &str) -> Option<String> {
-        let (mut map, mut pos, commands) = parse(input, false);
-
-        for command in commands {
-            let dir = vec_for(command);
-
-            if move_block(&mut map, pos, dir) {
-                pos = (pos.cast() + dir).map(|i| i as usize);
-            }
-        }
-
-        Some(score(&map) as i64).map(|r| r.to_string())
+        solve(input, false)
     }
     fn part2(&self, input: &str) -> Option<String> {
-        let (mut map, mut pos, commands) = parse(input, true);
-
-        for command in commands {
-            let dir = vec_for(command);
-
-            if move_block(&mut map, pos, dir) {
-                pos = (pos.cast() + dir).map(|i| i as usize);
-            }
-        }
-
-        Some(score(&map) as i64).map(|r| r.to_string())
+        solve(input, true)
     }
 }
 
