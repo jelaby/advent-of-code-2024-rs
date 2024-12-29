@@ -1,5 +1,4 @@
 use crate::days;
-use itertools::Itertools;
 use num::abs;
 use pathfinding::prelude::astar;
 use priority_queue::PriorityQueue;
@@ -39,11 +38,11 @@ fn parse(input: &str) -> (Vec<Vec<char>>, (i32, i32), (i32, i32)) {
         })
         .unwrap();
 
-    return (map, start, end);
+    (map, start, end)
 }
 
 fn find_shortest_route(map: &Vec<Vec<char>>, start: (i32, i32), end: (i32, i32)) -> i64 {
-    let (path, cost) = astar(
+    let (_, cost) = astar(
         &(start, (1i32, 0i32)),
         |&(p, (dx, dy))| {
             let mut result = vec![((p, (dy, dx)), 1000), ((p, (-dy, -dx)), 1000)];
@@ -136,20 +135,7 @@ fn routes_to_goal(
         }
     }
 
-    return result;
-}
-
-fn show_routes(map: &Vec<Vec<char>>, visited: &Vec<Vec<bool>>) {
-    for y in 0..map.len() {
-        for x in 0..map[y].len() {
-            if visited[y][x] {
-                print!("O");
-            } else {
-                print!("{}", map[y][x])
-            }
-        }
-        println!();
-    }
+    result
 }
 
 impl days::Day for Day {
