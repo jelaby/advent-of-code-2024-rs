@@ -216,32 +216,6 @@ where
     })
 }
 
-fn display(gates: &HashMap<&str, Gate>, bits: usize) {
-
-    fn display_gate(gates: &HashMap<&str, Gate>, name: &str, gate: &Gate) {
-        match gate {
-            Fixed(_) => print!("{name}"),
-            Operation(l, r, op) => {
-                print!("(");
-                display_gate(gates, l, gates.get(l).unwrap());
-                print!(" {op:?} ");
-                display_gate(gates, r, gates.get(r).unwrap());
-                print!(")");
-            }
-        }
-    }
-
-    for z in 0..=bits {
-        let name = format!("z{z:02}");
-        print!("{name} = ");
-        let gate = gates.get(name.as_str()).unwrap();
-        display_gate(gates, name.as_str(), gate);
-        print!(" ");
-    }
-    println!();
-
-}
-
 fn count_errors<F>(gates: &HashMap<&str, Gate>, bits: usize, a: i64, operation: &F) -> usize
 where
     F: Fn(i64, i64) -> i64,
@@ -278,9 +252,6 @@ fn find_candidate_swap_gates<'a>(
     let mut lsb_gates = source_gates(&gates, &lsb_gate);
     let mut msb_gates = source_gates(&gates, &msb_gate);
 
-    println!("   LSB -> {:?}", lsb_gates.iter().sorted().collect::<Vec<_>>());
-    println!("   MSB -> {:?}", msb_gates.iter().sorted().collect::<Vec<_>>());
-
     for b in 0..(max(1,lsb)-1) {
         for g in source_gates(
             &gates,
@@ -290,8 +261,6 @@ fn find_candidate_swap_gates<'a>(
             msb_gates.remove(g);
         }
     }
-
-    //println!("Common -> {common_gates:?}");
 
     (lsb_gates, msb_gates)
 }
@@ -414,8 +383,6 @@ where
                 if errors_now >= previous_errors {
                     continue;
                 }
-                println!("Swapping {x} with {y} (errors reduced from {previous_errors} to {errors_now}");
-
                 match solve(&modified_gates, bits, a, swap_count - 1, errors_now, operation) {
                     None => continue,
                     Some(mut result) => {
