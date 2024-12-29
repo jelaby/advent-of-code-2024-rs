@@ -25,7 +25,7 @@ fn parse(input: &str) -> (Vec<(usize, usize)>, (usize, usize)) {
 }
 
 fn corrupt_memory(coords: &Vec<(usize, usize)>, max: (usize, usize), n: usize) -> Vec<Vec<bool>> {
-    let mut result = vec![vec![false; (max.0 + 1)]; (max.1 + 1)];
+    let mut result = vec![vec![false; max.0 + 1]; max.1 + 1];
 
     for i in 0..n {
         let coord = coords[i];
