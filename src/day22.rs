@@ -50,7 +50,7 @@ fn best_sequence(prices_list: &Vec<Vec<i64>>) -> Vec<i64> {
         }
     }
 
-    let (result, value) = histogram
+    let (result, _) = histogram
         .iter()
         .sorted_by(|(_, a), (_, b)| b.cmp(a))
         .next()
@@ -71,7 +71,7 @@ impl days::Day for Day {
                 .map(|l| l.parse::<i64>().unwrap())
                 .map(|n| {
                     let mut n = n;
-                    for i in 0..2000 {
+                    for _ in 0..2000 {
                         n = next_secret(n);
                     }
                     n
