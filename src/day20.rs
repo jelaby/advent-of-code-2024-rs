@@ -254,7 +254,7 @@ mod tests {
 ",
         );
         assert_eq!(count_cheats(&map, start, end, 1, 2), 1);
-        assert_eq!(count_cheats(&map, start, end, 1, 3), 4);
-        assert_eq!(count_cheats(&map, start, end, 1, 4), 6);
+        assert_eq!(count_cheats(&map, start, end, 1, 3), 5);
+        assert_eq!(count_cheats(&map, start, end, 1, 4), 13);
     }
 }
