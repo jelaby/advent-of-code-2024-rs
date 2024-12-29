@@ -118,7 +118,6 @@ fn input_bits(gates: &HashMap<&str, Gate>) -> usize {
 
 fn set_inputs<'a, 'b>(
     gates: &'b HashMap<&'a str, Gate<'a>>,
-    bits: usize,
     x: i64,
     y: i64,
 ) -> HashMap<&'a str, Gate<'a>> {
@@ -165,38 +164,19 @@ fn source_gates<'a>(gates: &HashMap<&'a str, Gate<'a>>, gate: &'a str) -> HashSe
     result
 }
 
-fn union<'a>(l: &HashSet<&'a str>, r: &HashSet<&'a str>) -> HashSet<&'a str> {
-    let mut result = HashSet::new();
-    l.iter().for_each(|i| {
-        result.insert(*i);
-    });
-    r.iter().for_each(|i| {
-        result.insert(*i);
-    });
-    result
-}
-
-fn minus<'a, 'b>(l: &HashSet<&'a str>, r: &HashSet<&'b str>) -> HashSet<&'a str> {
-    let mut result = HashSet::new();
-    l.iter().filter(|&&i| !r.contains(i)).for_each(|i| {
-        result.insert(*i);
-    });
-    result
-}
-
 fn find_candidate_output_bits<F>(
     gates: &HashMap<&str, Gate>,
     bits: usize,
     a: i64,
     operation: &F,
-) -> Option<(usize, u32, u32)>
+) -> Option<(u32, u32)>
 where
     F: Fn(i64, i64) -> i64,
 {
     (0..=bits).find_map(|i| {
         let b = 0 ^ (1 << i);
 
-        match eval(&set_inputs(&gates, bits, a, b)) {
+        match eval(&set_inputs(&gates, a, b)) {
             None => None,
             Some(result) => {
                 let expected = operation(a, b);
@@ -207,7 +187,7 @@ where
                     let lsb = incorrect_bits_this_time.trailing_zeros();
                     let msb = (incorrect_bits_this_time ^ (1 << lsb)).trailing_zeros();
 
-                    Some((i, lsb, msb))
+                    Some((lsb, msb))
                 } else {
                     None
                 }
@@ -224,7 +204,7 @@ where
         .filter(|i| {
             let b = 0 ^ (1 << i);
 
-            match eval(&set_inputs(&gates, bits, a, b)) {
+            match eval(&set_inputs(&gates, a, b)) {
                 None => true,
                 Some(result) => {
                     let expected = operation(a, b);
@@ -288,20 +268,6 @@ fn swap_gates<'a>(
     result
 }
 
-fn check_gates<'a, F>(
-    gates: &HashMap<&'a str, Gate<'a>>,
-    bits: usize,
-    a: i64,
-    input_bit: u32,
-    operation: &F,
-    previous_errors: usize,
-) -> bool
-where
-    F: Fn(i64, i64) -> i64,
-{
-    count_errors(gates, bits, a, operation) < previous_errors
-}
-
 fn check_random<F>(gates: &HashMap<&str, Gate>, bits: usize, operation: &F) -> bool
 where F: Fn(i64,i64) -> i64 {
     let ones = ones(bits);
@@ -311,7 +277,7 @@ where F: Fn(i64,i64) -> i64 {
 
         let expected = operation(a,b);
 
-        match eval(&set_inputs(gates, bits, a, b)) {
+        match eval(&set_inputs(gates, a, b)) {
             None => return false,
             Some(actual) => if expected != actual {
                 return false;
@@ -340,17 +306,11 @@ where
     // get 0000 for a+b and 1111 for a&b
     let a = {
         let mut a = ones;
-        for _ in (0..=bits) {
+        for _ in 0..=bits {
             a = operation(a, a) & ones
         }
         a
     };
-
-    fn contains<'a>(s: &Vec<(&'a str, &'a str)>, a: &'a str, b: &'a str) -> bool {
-        s.iter().any(|&(x, y)| {
-            (x == a && y == b) || (x == b && y == a) || x == a || x == b || y == a || y == b
-        })
-    }
 
     fn solve<'a, F>(
         gates: &HashMap<&'a str, Gate<'a>>,
@@ -371,7 +331,7 @@ where
             };
         }
 
-        let (input_bit, lsb, msb) = find_candidate_output_bits(&gates, bits, a, &operation)?;
+        let (lsb, msb) = find_candidate_output_bits(&gates, bits, a, &operation)?;
 
         let (left_candidates, right_candidates) = find_candidate_swap_gates(&gates, lsb, msb);
 
