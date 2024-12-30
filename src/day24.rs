@@ -1,8 +1,8 @@
-use std::cmp::max;
 use crate::days;
 use itertools::Itertools;
-use std::collections::{HashMap, HashSet, VecDeque};
 use rand::random;
+use std::cmp::max;
+use std::collections::{HashMap, HashSet, VecDeque};
 
 pub struct Day;
 
@@ -107,6 +107,15 @@ fn parse<'a>(input: &'a str) -> HashMap<&'a str, Gate<'a>> {
     result
 }
 
+fn output_bits(gates: &HashMap<&str, Gate>) -> usize {
+    gates
+        .keys()
+        .filter(|name| &name[0..1] == "z")
+        .map(|name| name[1..].parse::<usize>().unwrap())
+        .max()
+        .unwrap()
+}
+
 fn input_bits(gates: &HashMap<&str, Gate>) -> usize {
     gates
         .keys()
@@ -196,7 +205,7 @@ where
     })
 }
 
-fn count_errors<F>(gates: &HashMap<&str, Gate>, bits: usize, a: i64, operation: &F) -> usize
+fn count_errors<F>(gates: &Compiled, bits: usize, a: i64, operation: &F) -> usize
 where
     F: Fn(i64, i64) -> i64,
 {
@@ -204,13 +213,9 @@ where
         .filter(|i| {
             let b = 0 ^ (1 << i);
 
-            match eval(&set_inputs(&gates, a, b)) {
-                None => true,
-                Some(result) => {
-                    let expected = operation(a, b);
-                    expected != result
-                }
-            }
+            let result = gates.eval(a, b);
+            let expected = operation(a, b);
+            expected != result
         })
         .count()
 }
@@ -232,7 +237,7 @@ fn find_candidate_swap_gates<'a>(
     let mut lsb_gates = source_gates(&gates, &lsb_gate);
     let mut msb_gates = source_gates(&gates, &msb_gate);
 
-    for b in 0..(max(1,lsb)-1) {
+    for b in 0..(max(1, lsb) - 1) {
         for g in source_gates(
             &gates,
             gates.get_key_value(format!("z{b:02}").as_str()).unwrap().0,
@@ -268,20 +273,20 @@ fn swap_gates<'a>(
     result
 }
 
-fn check_random<F>(gates: &HashMap<&str, Gate>, bits: usize, operation: &F) -> bool
-where F: Fn(i64,i64) -> i64 {
+fn check_random<F>(gates: &Compiled, bits: usize, operation: &F) -> bool
+where
+    F: Fn(i64, i64) -> i64,
+{
     let ones = ones(bits);
     for _ in 0..100 {
         let a = random::<i64>() & ones;
         let b = random::<i64>() & ones;
 
-        let expected = operation(a,b);
+        let expected = operation(a, b);
 
-        match eval(&set_inputs(gates, a, b)) {
-            None => return false,
-            Some(actual) => if expected != actual {
-                return false;
-            }
+        let actual = gates.eval(a, b);
+        if expected != actual {
+            return false;
         }
     }
     true
@@ -293,6 +298,106 @@ fn ones(bits: usize) -> i64 {
         ones += 1 << b;
     }
     ones
+}
+
+struct Compiled {
+    z: Vec<Box<CompiledGate>>,
+}
+impl Compiled {
+    fn eval(&self, x: i64, y: i64) -> i64 {
+        self.z
+            .iter()
+            .rev()
+            .map(|gate| gate.eval(x, y))
+            .fold(0i64, |acc, n| (acc << 1) + (n as i64))
+    }
+}
+
+enum CompiledGate {
+    X(i64),
+    Y(i64),
+    And(Box<CompiledGate>, Box<CompiledGate>),
+    Or(Box<CompiledGate>, Box<CompiledGate>),
+    Xor(Box<CompiledGate>, Box<CompiledGate>),
+}
+
+impl CompiledGate {
+    fn eval(&self, x: i64, y: i64) -> bool {
+        use CompiledGate::*;
+        match self {
+            X(bit) => x & (1i64 << bit) != 0,
+            Y(bit) => y & (1i64 << bit) != 0,
+            And(l, r) => l.eval(x, y) && r.eval(x, y),
+            Or(l, r) => l.eval(x, y) || r.eval(x, y),
+            Xor(l, r) => l.eval(x, y) ^ r.eval(x, y),
+        }
+    }
+}
+
+fn compile_gate<'a>(
+    gates: &HashMap<&'a str, Gate<'a>>,
+    name: &'a str,
+    gate: Gate<'a> ,
+    evaluating: &mut HashSet<&'a str>,
+) -> Result<Box<CompiledGate>, String> {
+    if evaluating.contains(name) {
+        Err(format!("Loop found: {name} in {evaluating:?}"))
+    } else {
+        evaluating.insert(name);
+        let result = match gate {
+            Fixed(_) => match &name[0..1] {
+                "x" => Ok(Box::new(CompiledGate::X(
+                    (&name[1..])
+                        .parse()
+                        .map_err(|_| format!("Could not parse {name}"))?,
+                ))),
+                "y" => Ok(Box::new(CompiledGate::Y(
+                    (&name[1..])
+                        .parse()
+                        .map_err(|_| format!("Could not parse {name}"))?,
+                ))),
+                _ => Err(format!("Unknown fixed gate: {}", name)),
+            },
+            Operation(a, b, op) => {
+                let a = compile_gate(
+                    gates,
+                    a,
+                    *gates.get(a).ok_or_else(|| format!("Unknown gate {a}"))?,
+                    evaluating,
+                )?;
+                let b = compile_gate(
+                    gates,
+                    b,
+                    *gates.get(b).ok_or_else(|| format!("Unknown gate {b}"))?,
+                    evaluating,
+                )?;
+                match op {
+                    Op::And => Ok(Box::new(CompiledGate::And(a, b))),
+                    Op::Or => Ok(Box::new(CompiledGate::Or(a, b))),
+                    Op::Xor => Ok(Box::new(CompiledGate::Xor(a, b))),
+                }
+            }
+        };
+        evaluating.remove(name);
+        result
+    }
+}
+
+fn compile(gates: &HashMap<&str, Gate>) -> Result<Compiled, String> {
+    let mut result = Vec::new();
+    for z in 0..=output_bits(gates) {
+        let z = format!("z{z:02}");
+
+        let gate = *gates
+            .get(z.as_str())
+            .ok_or_else(|| format!("Could not find gate {z}"))?;
+
+        let gate = compile_gate(gates, z.as_str(), gate, &mut HashSet::new())?;
+
+        result.push(gate);
+    }
+
+    Ok(Compiled { z: result })
 }
 
 fn do_part2<F>(input: &str, swap_count: i64, operation: F) -> Option<String>
@@ -324,10 +429,17 @@ where
         F: Fn(i64, i64) -> i64,
     {
         if swap_count == 0 {
-            return if count_errors(&gates, bits, a, operation) == 0 && check_random(&gates, bits, operation) {
-                Some(Vec::new())
-            } else {
-                None
+            return match compile(gates) {
+                Err(_) => None,
+                Ok(gates) => {
+                    if count_errors(&gates, bits, a, operation) == 0
+                        && check_random(&gates, bits, operation)
+                    {
+                        Some(Vec::new())
+                    } else {
+                        None
+                    }
+                }
             };
         }
 
@@ -338,16 +450,29 @@ where
         for &x in &left_candidates {
             for &y in &right_candidates {
                 let modified_gates = swap_gates(&gates, x, y);
-
-                let errors_now = count_errors(&modified_gates, bits, a, operation);
-                if errors_now >= previous_errors {
-                    continue;
-                }
-                match solve(&modified_gates, bits, a, swap_count - 1, errors_now, operation) {
-                    None => continue,
-                    Some(mut result) => {
-                        result.push((x, y));
-                        return Some(result);
+                match compile(&modified_gates) {
+                    Err(_) => {
+                        continue
+                    },
+                    Ok(compiled_modified_gates) => {
+                        let errors_now = count_errors(&compiled_modified_gates, bits, a, operation);
+                        if errors_now >= previous_errors {
+                            continue;
+                        }
+                        match solve(
+                            &modified_gates,
+                            bits,
+                            a,
+                            swap_count - 1,
+                            errors_now,
+                            operation,
+                        ) {
+                            None => continue,
+                            Some(mut result) => {
+                                result.push((x, y));
+                                return Some(result);
+                            }
+                        }
                     }
                 }
             }
@@ -355,7 +480,16 @@ where
         None
     }
 
-    let result = solve(&gates, bits, a, swap_count, count_errors(&gates, bits, a, &operation), &operation)?;
+    let compiled_gates = compile(&gates).ok()?;
+
+    let result = solve(
+        &gates,
+        bits,
+        a,
+        swap_count,
+        count_errors(&compiled_gates, bits, a, &operation),
+        &operation,
+    )?;
     Some(result.iter().flat_map(|(x, y)| [x, y]).sorted().join(","))
 }
 
@@ -384,7 +518,26 @@ impl days::Day for Day {
     fn part1(&self, input: &str) -> Option<String> {
         let gates = parse(input);
 
-        eval(&gates).map(|r| r.to_string())
+        let mut x = 0;
+        let mut y = 0;
+        gates.iter()
+            .for_each(|(name, gate)| {
+                match gate {
+                    Fixed(value) => {
+                        let bit = name[1..].parse::<i64>().unwrap();
+                        let value = if *value { 1 } else { 0 };
+                        match &name[0..1] {
+                            "x" => x |= value << bit,
+                            "y" => y |= value << bit,
+                            _ => panic!("Unknown fixed gate {name}")
+                        }
+                    }
+                    _ => {}
+                }
+            });
+
+        Some(compile(&gates).map(|compiled| compiled.eval(x,y)).unwrap())
+            .map(|r| r.to_string())
     }
     fn part2(&self, input: &str) -> Option<String> {
         do_part2(input, 4, |a, b| a + b)
