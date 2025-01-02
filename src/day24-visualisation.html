@@ -1,0 +1,97 @@
+<html>
+<head>
+    <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+
+    <style type="text/css">
+        #mynetwork {
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+        }
+    </style>
+</head>
+<body>
+<div id="mynetwork"></div>
+
+<script type="text/javascript">
+
+    fetch("../input/day24.txt")
+        .then((response) => response.text())
+        .then((input) => {
+
+            const SCALE = 400;
+            let [inputs, gates] = input.split("\n\n")
+            console.log(`${inputs} / / ${gates}`)
+
+            let nodes = [
+                ...inputs.split("\n")
+                    .map(input => input.split(": "))
+                    .map(([gate, value]) => ({
+                        id: gate,
+                        label: gate,
+                        fixed: true,
+                        shape: "ellipse",
+                        color: "#b2b2b2",
+                        x: parseInt(gate.substring(1)) * SCALE + (gate.startsWith("x")?0:SCALE/2),
+                        y: gate.startsWith("x")?0:SCALE/4
+                    })),
+                ...gates.split("\n")
+                    .filter(line => line.length !== 0)
+                    .map(gate => gate.split(" "))
+                    .map(([l, op, r, _, gate]) => {
+                        let result = {
+                            id: gate,
+                            label: `${op}\n${gate}`,
+                            shape: (() => { switch (op) {
+                                case 'AND': return 'triangle';
+                                case 'OR': return 'square';
+                                case 'XOR': return 'diamond';
+                                default: return 'box'
+                            }})(),
+                            color: (() => { switch (op) {
+                                case 'AND': return {border: "#ff0000", background: "#ffb2b2"};
+                                case 'OR': return {border: "#00ff00", background: "#b2ffb2"};
+                                case 'XOR': return {border: "#0000ff", background: "#b2b2ff"};
+                                default: return {border: "#000000", background: "#ff0000"}
+                            }})(),
+                        }
+                        if (gate.startsWith("z")) {
+                            result.x = parseInt(gate.substring(1)) * SCALE
+                            result.y = SCALE * 2
+                            result.fixed = true
+                        }
+                        return result
+                    })
+            ]
+            console.log(nodes)
+            nodes = new vis.DataSet(nodes)
+
+            const ARROWS = {
+                middle: {
+                    enabled: true,
+                    type: 'arrow',
+                },
+            }
+
+            let edges = new vis.DataSet(gates.split("\n")
+                .map(gate => gate.split(" "))
+                .flatMap(([l, op, r, _, gate]) =>
+                    [
+                        {from: l, to: gate, arrows: ARROWS},
+                        {from: r, to: gate, arrows: ARROWS},
+                    ]
+                ))
+
+            var container = document.getElementById('mynetwork');
+
+            var data = {
+                nodes: nodes,
+                edges: edges
+            };
+            var options = {};
+
+            new vis.Network(container, data, options);
+        })
+</script>
+</body>
+</html>
